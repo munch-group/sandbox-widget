@@ -366,7 +366,28 @@ class ExerciseOutputWidget(anywidget.AnyWidget):
     traceback = traitlets.Unicode("").tag(sync=True)
 
     def __init__(self, result):
-        super().__init__()
+        # Pass the trait values as constructor kwargs rather than assigning
+        # them one at a time after the fact: `Widget.__init__` sets kwarg
+        # traits *before* calling `self.open()`, so the single comm_open
+        # message already carries the full, correct state. Setting them
+        # afterward instead (the previous approach) opens the comm with the
+        # traits' default (empty) values first, then sends a separate
+        # `comm.send()` update message per trait -- a race the frontend can
+        # lose on a cold widget-manager/first-render (exactly when a
+        # brand-new anywidget ESM module is still being evaluated), drawing
+        # the box from the initial empty state before the stdout/stderr/etc.
+        # update messages are processed. This is what made the very first
+        # `%%exercise`/`%%script` cell in a kernel session show up with no
+        # stdout, self-correcting on the very next run once the frontend was
+        # warmed up.
+        super().__init__(
+            stdout=result.stdout,
+            stderr=result.stderr,
+            outputs=result.outputs,
+            success=result.success,
+            error=result.error or "",
+            traceback=result.traceback or "",
+        )
         # Every ipywidgets-compliant frontend (JupyterLab, classic Notebook,
         # VS Code, Colab, ...) honors `layout.width` natively on the view
         # element -- more portable than anything _ESM's render() can do by
@@ -374,12 +395,6 @@ class ExerciseOutputWidget(anywidget.AnyWidget):
         # notebook renderer) sandbox the widget in a way our own JS can't
         # reach out of.
         self.layout.width = "100%"
-        self.stdout = result.stdout
-        self.stderr = result.stderr
-        self.outputs = result.outputs
-        self.success = result.success
-        self.error = result.error or ""
-        self.traceback = result.traceback or ""
 
 
 def register_exercise_magic(ipython=None):
