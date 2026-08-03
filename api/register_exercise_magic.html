@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>register_exercise_magic – script-widget</title>
+<title>register_exercise_magic – sandbox-widget</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -123,7 +123,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="../index.html">
-    <span class="navbar-title">script-widget</span>
+    <span class="navbar-title">sandbox-widget</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -228,7 +228,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#script_widget.widget.register_exercise_magic" id="toc-script_widget.widget.register_exercise_magic" class="nav-link active" data-scroll-target="#script_widget.widget.register_exercise_magic">register_exercise_magic</a></li>
+  <li><a href="#sandbox_widget.widget.register_exercise_magic" id="toc-sandbox_widget.widget.register_exercise_magic" class="nav-link active" data-scroll-target="#sandbox_widget.widget.register_exercise_magic">register_exercise_magic</a></li>
   </ul>
 </nav>
     </div>
@@ -238,15 +238,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<section id="script_widget.widget.register_exercise_magic" class="level1">
+<section id="sandbox_widget.widget.register_exercise_magic" class="level1">
 <h1>register_exercise_magic</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>script_widget.widget.register_exercise_magic(ipython<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Register the <code>%%exercise</code> cell magic.</p>
-<p>In IPython/Jupyter, <code>%%exercise</code> runs the cell body in a fresh, isolated namespace (see <code>executor.run_exercise</code>) and displays everything it produced – stdout, stderr, rich output, any exception – in a shaded <code>ExerciseOutputWidget</code> below the cell::</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>sandbox_widget.widget.register_exercise_magic(ipython<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Register the <code>%%exercise</code> cell magic (and its <code>%%sandbox</code> alias).</p>
+<p>In IPython/Jupyter, <code>%%exercise</code> runs the cell body in a fresh subprocess (see <code>executor.run_exercise</code>) and displays everything it produced – stdout, stderr, rich output, any exception – in a shaded <code>ExerciseOutputWidget</code> below the cell::</p>
 <pre><code>%%exercise
 import matplotlib.pyplot as plt
 plt.plot([1, 2, 3])</code></pre>
-<p>Nothing the cell defines or imports persists past that one run, and nothing the notebook has already defined is visible to it except through the cell’s own imports.</p>
+<p><code>%%sandbox</code> runs the exact same handler under a second name – both are registered from the same function, so there’s no separate implementation to keep in sync. It’s named <code>%%sandbox</code> rather than <code>%%script</code> specifically to avoid clashing with IPython’s own built-in <code>%%script</code> cell magic (which runs a cell through an external script interpreter, e.g.&nbsp;<code>%%script bash</code>) – an earlier version of this package registered under that name and silently replaced the built-in for the rest of the kernel session, breaking any cell relying on its real behavior. It also means a cell that uses <code>%%sandbox</code> before <code>import sandbox_widget</code> has run gets a clear “magic not found” error instead of quietly falling through to the built-in <code>%%script</code> and failing there in a confusing, unrelated way.</p>
+<p>Nothing the cell defines, imports, or mutates persists past that one run, and nothing the notebook has already defined or imported is visible to it at all – not even via a <code>sys.modules</code> cache hit, since the cell runs in its own interpreter process.</p>
 <p>Called automatically on import; returns True when a live shell is found, False otherwise (e.g.&nbsp;plain Python).</p>
 
 

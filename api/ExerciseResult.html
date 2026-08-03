@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>exerciseresult – script-widget</title>
+<title>exerciseresult – sandbox-widget</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -124,7 +124,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="../index.html">
-    <span class="navbar-title">script-widget</span>
+    <span class="navbar-title">sandbox-widget</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -229,7 +229,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#script_widget.executor.ExerciseResult" id="toc-script_widget.executor.ExerciseResult" class="nav-link active" data-scroll-target="#script_widget.executor.ExerciseResult">ExerciseResult</a>
+  <li><a href="#sandbox_widget.executor.ExerciseResult" id="toc-sandbox_widget.executor.ExerciseResult" class="nav-link active" data-scroll-target="#sandbox_widget.executor.ExerciseResult">ExerciseResult</a>
   <ul class="collapse">
   <li><a href="#attributes" id="toc-attributes" class="nav-link" data-scroll-target="#attributes">Attributes</a></li>
   </ul></li>
@@ -242,9 +242,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<section id="script_widget.executor.ExerciseResult" class="level1">
+<section id="sandbox_widget.executor.ExerciseResult" class="level1">
 <h1>ExerciseResult</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>script_widget.executor.ExerciseResult(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>sandbox_widget.executor.ExerciseResult(</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    stdout<span class="op">=</span><span class="st">''</span>,</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    stderr<span class="op">=</span><span class="st">''</span>,</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span><span class="va">None</span>,</span>
@@ -265,7 +265,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </dd>
 <dt><code><span class="parameter-name"><strong>outputs</strong></span> <span class="parameter-annotation-sep">:</span> <span class="parameter-annotation">list of dict</span></code></dt>
 <dd>
-<p>Rich display MIME bundles produced by the cell – a trailing bare expression’s repr, an explicit <code>display(...)</code> call, or (when run with a live IPython shell) a matplotlib figure flushed after execution. Each entry maps MIME type to its data, e.g.&nbsp;<code>{"image/png": "&lt;base64&gt;", "text/plain": "..."}</code>.</p>
+<p>Rich display MIME bundles produced by the cell – a trailing bare expression’s repr, an explicit <code>display(...)</code> call, or a matplotlib figure flushed after execution. Each entry maps MIME type to its data, e.g.&nbsp;<code>{"image/png": "&lt;base64&gt;", "text/plain": "..."}</code>.</p>
 </dd>
 <dt><code><span class="parameter-name"><strong>error</strong></span> <span class="parameter-annotation-sep">:</span> <span class="parameter-annotation"><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</span></code></dt>
 <dd>
@@ -273,7 +273,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </dd>
 <dt><code><span class="parameter-name"><strong>traceback</strong></span> <span class="parameter-annotation-sep">:</span> <span class="parameter-annotation"><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</span></code></dt>
 <dd>
-<p>The full formatted traceback for <code>error</code>, else <code>None</code>.</p>
+<p>The full formatted traceback for <code>error</code>, else <code>None</code>. Carries the same ANSI color codes as a normal uncaught-exception traceback (captured via the subprocess’s own <code>ip.InteractiveTB</code>), except for a plain-text <code>SyntaxError</code> (caught before the subprocess’s shell is even set up) or a subprocess that died outright.</p>
 </dd>
 </dl>
 

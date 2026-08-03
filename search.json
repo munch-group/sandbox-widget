@@ -4,7 +4,7 @@
     "href": "pages/example.html",
     "title": "Examples",
     "section": "",
-    "text": "A closer look at %%exercise: isolation between cells, how errors are reported, and why importing an already-loaded library inside the cell doesn’t reach back into the notebook’s own copy of it.\nimport script_widget",
+    "text": "A closer look at %%exercise: isolation between cells, how errors are reported, and why importing an already-loaded library inside the cell doesn’t reach back into the notebook’s own copy of it.\nimport sandbox_widget",
     "crumbs": [
       "Examples",
       "Examples"
@@ -15,7 +15,7 @@
     "href": "pages/example.html#a-cells-variables-dont-leak-out",
     "title": "Examples",
     "section": "A cell’s variables don’t leak out",
-    "text": "A cell’s variables don’t leak out\n%%exercise runs in a namespace that’s fresh on every invocation, so a name a cell defines is gone once the cell finishes:\n\n%%script\nx = 42\nfor i in range(40):\n    print(i)\nasdf\n\n\n\n\nA later %%exercise cell can’t see it either – referencing x again raises a NameError. %%exercise catches that error and shows it in the box rather than crashing the notebook:\n\n%%script\nx\n\n\n\n\nThe same is true of any exception the cell raises – it’s reported with its full traceback, not propagated to the notebook:\n\n%%script\n1 / 0",
+    "text": "A cell’s variables don’t leak out\n%%exercise runs in a namespace that’s fresh on every invocation, so a name a cell defines is gone once the cell finishes:\n\n%%sandbox\nx = 42\nfor i in range(40):\n    print(i)\nasdf\n\n\n\n\nA later %%exercise cell can’t see it either – referencing x again raises a NameError. %%exercise catches that error and shows it in the box rather than crashing the notebook:\n\n%%sandbox\nx\n\n\n\n\nThe same is true of any exception the cell raises – it’s reported with its full traceback, not propagated to the notebook:\n\n%%sandbox\n1 / 0",
     "crumbs": [
       "Examples",
       "Examples"
@@ -26,7 +26,7 @@
     "href": "pages/example.html#imports-are-isolated-too",
     "title": "Examples",
     "section": "Imports are isolated too",
-    "text": "Imports are isolated too\nimport matplotlib.pyplot as plt inside the cell doesn’t reach back into the notebook’s own matplotlib session – each %%exercise cell runs in a brand-new subprocess with its own sys.modules, so the import is genuinely fresh. Mutating it – here, the default line width – has no effect outside the cell:\n\n%%script\nimport matplotlib.pyplot as plt\nplt.rcParams['lines.linewidth'] = 5\nplt.plot([1, 3, 2])\n\n\n\n\n\nimport matplotlib.pyplot as plt\nplt.rcParams['lines.linewidth']\n\n1.5",
+    "text": "Imports are isolated too\nimport matplotlib.pyplot as plt inside the cell doesn’t reach back into the notebook’s own matplotlib session – each %%exercise cell runs in a brand-new subprocess with its own sys.modules, so the import is genuinely fresh. Mutating it – here, the default line width – has no effect outside the cell:\n\n%%sandbox\nimport matplotlib.pyplot as plt\nplt.rcParams['lines.linewidth'] = 5\nplt.plot([1, 3, 2])\n\n\n\n\n\nimport matplotlib.pyplot as plt\nplt.rcParams['lines.linewidth']\n\n1.5",
     "crumbs": [
       "Examples",
       "Examples"
@@ -37,7 +37,7 @@
     "href": "pages/example.html#stdout-and-stderr",
     "title": "Examples",
     "section": "stdout and stderr",
-    "text": "stdout and stderr\nBoth streams are captured and shown separately:\n\n%%script\nimport sys\nprint('to stdout')\nprint('to stderr', file=sys.stderr)",
+    "text": "stdout and stderr\nBoth streams are captured and shown separately:\n\n%%sandbox\nimport sys\nprint('to stdout')\nprint('to stderr', file=sys.stderr)",
     "crumbs": [
       "Examples",
       "Examples"
@@ -59,7 +59,7 @@
     "href": "api/index.html",
     "title": "Function reference",
     "section": "",
-    "text": "The engine behind %%exercise: run a cell body in a fresh, isolated namespace and capture everything it produced.\n\n\n\nrun_exercise\nRun source in a fresh, isolated namespace and capture everything\n\n\nExerciseResult\nThe outcome of running one %%exercise cell.\n\n\n\n\n\n\nThe anywidget-based output widget and the %%exercise cell magic.\n\n\n\nExerciseOutputWidget\nEverything a %%exercise cell produced, rendered in a shaded box.\n\n\nregister_exercise_magic\nRegister the %%exercise cell magic.",
+    "text": "The engine behind %%exercise: run a cell body in a fresh, isolated namespace and capture everything it produced.\n\n\n\nrun_exercise\nRun source in a fresh, fully isolated subprocess and capture\n\n\nExerciseResult\nThe outcome of running one %%exercise cell.\n\n\n\n\n\n\nThe anywidget-based output widget and the %%exercise cell magic.\n\n\n\nExerciseOutputWidget\nEverything a %%exercise cell produced, rendered in a shaded box.\n\n\nregister_exercise_magic\nRegister the %%exercise cell magic (and its %%sandbox alias).",
     "crumbs": [
       "Function reference"
     ]
@@ -69,7 +69,7 @@
     "href": "api/index.html#executor",
     "title": "Function reference",
     "section": "",
-    "text": "The engine behind %%exercise: run a cell body in a fresh, isolated namespace and capture everything it produced.\n\n\n\nrun_exercise\nRun source in a fresh, isolated namespace and capture everything\n\n\nExerciseResult\nThe outcome of running one %%exercise cell.",
+    "text": "The engine behind %%exercise: run a cell body in a fresh, isolated namespace and capture everything it produced.\n\n\n\nrun_exercise\nRun source in a fresh, fully isolated subprocess and capture\n\n\nExerciseResult\nThe outcome of running one %%exercise cell.",
     "crumbs": [
       "Function reference"
     ]
@@ -79,7 +79,7 @@
     "href": "api/index.html#widget",
     "title": "Function reference",
     "section": "",
-    "text": "The anywidget-based output widget and the %%exercise cell magic.\n\n\n\nExerciseOutputWidget\nEverything a %%exercise cell produced, rendered in a shaded box.\n\n\nregister_exercise_magic\nRegister the %%exercise cell magic.",
+    "text": "The anywidget-based output widget and the %%exercise cell magic.\n\n\n\nExerciseOutputWidget\nEverything a %%exercise cell produced, rendered in a shaded box.\n\n\nregister_exercise_magic\nRegister the %%exercise cell magic (and its %%sandbox alias).",
     "crumbs": [
       "Function reference"
     ]
@@ -89,7 +89,7 @@
     "href": "api/run_exercise.html",
     "title": "run_exercise",
     "section": "",
-    "text": "script_widget.executor.run_exercise(source, ip=None)\nRun source in a fresh, isolated namespace and capture everything it produced.\n\n\n\nsource : str\n\nThe cell body.\n\nip : InteractiveShell or None = None\n\nThe live IPython shell, if any. When given, stdout/stderr and rich display output (display(...) calls, a trailing bare expression’s repr, matplotlib figures) are captured via IPython.utils.capture.capture_output, and the shell’s post_execute event is triggered after running so any matplotlib-inline flush hook fires exactly as it would after a normal cell. Without ip (e.g. under plain pytest), only stdout/stderr are captured and the trailing value (if any) is reported as a text/plain output.\n\n\n\n\n\n\n : ExerciseResult",
+    "text": "sandbox_widget.executor.run_exercise(source)\nRun source in a fresh, fully isolated subprocess and capture everything it produced.\nThe cell body runs in a brand-new Python interpreter – spawned via multiprocessing (the \"spawn\" start method specifically: safe to call from a live, multi-threaded Jupyter kernel process, unlike fork), one disposable process per call, never reused across cells. That’s what makes the isolation real: an import inside the cell always gets a genuinely fresh module, even for something the notebook has already imported – there’s no sys.modules cache hit handing back the notebook’s own live object, and no way for the cell to mutate shared state (e.g. matplotlib rcParams) that’s still visible once the subprocess exits.\nThe subprocess sets up its own throwaway IPython shell (via IPython.testing.globalipapp, with %matplotlib inline enabled) so stdout/stderr, rich display() output, and matplotlib figures are still captured exactly as before – that capture machinery (_run_with_ipython) is unchanged, just running on the other side of a process boundary now. One consequence: a figure drawn inside %%exercise renders with a pristine default backend/rcParams, not whatever the notebook’s own matplotlib session has been configured to at runtime – there’s no live session left to share.\n\n\n\nsource : str\n\nThe cell body.\n\n\n\n\n\n\n : ExerciseResult",
     "crumbs": [
       "Executor",
       "run_exercise"
@@ -100,7 +100,7 @@
     "href": "api/run_exercise.html#parameters",
     "title": "run_exercise",
     "section": "",
-    "text": "source : str\n\nThe cell body.\n\nip : InteractiveShell or None = None\n\nThe live IPython shell, if any. When given, stdout/stderr and rich display output (display(...) calls, a trailing bare expression’s repr, matplotlib figures) are captured via IPython.utils.capture.capture_output, and the shell’s post_execute event is triggered after running so any matplotlib-inline flush hook fires exactly as it would after a normal cell. Without ip (e.g. under plain pytest), only stdout/stderr are captured and the trailing value (if any) is reported as a text/plain output.",
+    "text": "source : str\n\nThe cell body.",
     "crumbs": [
       "Executor",
       "run_exercise"
@@ -122,7 +122,7 @@
     "href": "api/ExerciseOutputWidget.html",
     "title": "ExerciseOutputWidget",
     "section": "",
-    "text": "script_widget.widget.ExerciseOutputWidget(result)\nEverything a %%exercise cell produced, rendered in a shaded box.\n\n\n\nresult : script_widget.executor.ExerciseResult\n\nThe outcome of run_exercise. All traits below are copied from it once at construction time and never change afterward.\n\n\n\n\n\n\nstdout, stderr : str\n\nCaptured output streams.\n\noutputs : list of dict\n\nCaptured rich display MIME bundles (see ExerciseResult.outputs).\n\nsuccess : bool\n\nWhether the cell ran without raising.\n\nerror : str\n\nShort exception summary, or \"\" if none.\n\ntraceback : str\n\nFull formatted traceback, or \"\" if none.",
+    "text": "sandbox_widget.widget.ExerciseOutputWidget(result)\nEverything a %%exercise cell produced, rendered in a shaded box.\n\n\n\nresult : sandbox_widget.executor.ExerciseResult\n\nThe outcome of run_exercise. All traits below are copied from it once at construction time and never change afterward.\n\n\n\n\n\n\nstdout, stderr : str\n\nCaptured output streams.\n\noutputs : list of dict\n\nCaptured rich display MIME bundles (see ExerciseResult.outputs).\n\nsuccess : bool\n\nWhether the cell ran without raising.\n\nerror : str\n\nShort exception summary, or \"\" if none.\n\ntraceback : str\n\nFull formatted traceback, or \"\" if none.",
     "crumbs": [
       "Widget",
       "ExerciseOutputWidget"
@@ -133,7 +133,7 @@
     "href": "api/ExerciseOutputWidget.html#parameters",
     "title": "ExerciseOutputWidget",
     "section": "",
-    "text": "result : script_widget.executor.ExerciseResult\n\nThe outcome of run_exercise. All traits below are copied from it once at construction time and never change afterward.",
+    "text": "result : sandbox_widget.executor.ExerciseResult\n\nThe outcome of run_exercise. All traits below are copied from it once at construction time and never change afterward.",
     "crumbs": [
       "Widget",
       "ExerciseOutputWidget"
@@ -155,7 +155,7 @@
     "href": "api/ExerciseResult.html",
     "title": "ExerciseResult",
     "section": "",
-    "text": "script_widget.executor.ExerciseResult(\n    stdout='',\n    stderr='',\n    outputs=None,\n    error=None,\n    traceback=None,\n)\nThe outcome of running one %%exercise cell.\n\n\n\nstdout : str\n\nEverything the cell printed to stdout.\n\nstderr : str\n\nEverything the cell printed to stderr.\n\noutputs : list of dict\n\nRich display MIME bundles produced by the cell – a trailing bare expression’s repr, an explicit display(...) call, or (when run with a live IPython shell) a matplotlib figure flushed after execution. Each entry maps MIME type to its data, e.g. {\"image/png\": \"&lt;base64&gt;\", \"text/plain\": \"...\"}.\n\nerror : str or None\n\nA short \"ExceptionType: message\" summary if the cell failed to parse or raised while running, else None.\n\ntraceback : str or None\n\nThe full formatted traceback for error, else None.",
+    "text": "sandbox_widget.executor.ExerciseResult(\n    stdout='',\n    stderr='',\n    outputs=None,\n    error=None,\n    traceback=None,\n)\nThe outcome of running one %%exercise cell.\n\n\n\nstdout : str\n\nEverything the cell printed to stdout.\n\nstderr : str\n\nEverything the cell printed to stderr.\n\noutputs : list of dict\n\nRich display MIME bundles produced by the cell – a trailing bare expression’s repr, an explicit display(...) call, or a matplotlib figure flushed after execution. Each entry maps MIME type to its data, e.g. {\"image/png\": \"&lt;base64&gt;\", \"text/plain\": \"...\"}.\n\nerror : str or None\n\nA short \"ExceptionType: message\" summary if the cell failed to parse or raised while running, else None.\n\ntraceback : str or None\n\nThe full formatted traceback for error, else None. Carries the same ANSI color codes as a normal uncaught-exception traceback (captured via the subprocess’s own ip.InteractiveTB), except for a plain-text SyntaxError (caught before the subprocess’s shell is even set up) or a subprocess that died outright.",
     "crumbs": [
       "Executor",
       "ExerciseResult"
@@ -166,7 +166,7 @@
     "href": "api/ExerciseResult.html#attributes",
     "title": "ExerciseResult",
     "section": "",
-    "text": "stdout : str\n\nEverything the cell printed to stdout.\n\nstderr : str\n\nEverything the cell printed to stderr.\n\noutputs : list of dict\n\nRich display MIME bundles produced by the cell – a trailing bare expression’s repr, an explicit display(...) call, or (when run with a live IPython shell) a matplotlib figure flushed after execution. Each entry maps MIME type to its data, e.g. {\"image/png\": \"&lt;base64&gt;\", \"text/plain\": \"...\"}.\n\nerror : str or None\n\nA short \"ExceptionType: message\" summary if the cell failed to parse or raised while running, else None.\n\ntraceback : str or None\n\nThe full formatted traceback for error, else None.",
+    "text": "stdout : str\n\nEverything the cell printed to stdout.\n\nstderr : str\n\nEverything the cell printed to stderr.\n\noutputs : list of dict\n\nRich display MIME bundles produced by the cell – a trailing bare expression’s repr, an explicit display(...) call, or a matplotlib figure flushed after execution. Each entry maps MIME type to its data, e.g. {\"image/png\": \"&lt;base64&gt;\", \"text/plain\": \"...\"}.\n\nerror : str or None\n\nA short \"ExceptionType: message\" summary if the cell failed to parse or raised while running, else None.\n\ntraceback : str or None\n\nThe full formatted traceback for error, else None. Carries the same ANSI color codes as a normal uncaught-exception traceback (captured via the subprocess’s own ip.InteractiveTB), except for a plain-text SyntaxError (caught before the subprocess’s shell is even set up) or a subprocess that died outright.",
     "crumbs": [
       "Executor",
       "ExerciseResult"
@@ -177,7 +177,7 @@
     "href": "api/register_exercise_magic.html",
     "title": "register_exercise_magic",
     "section": "",
-    "text": "register_exercise_magic\nscript_widget.widget.register_exercise_magic(ipython=None)\nRegister the %%exercise cell magic.\nIn IPython/Jupyter, %%exercise runs the cell body in a fresh, isolated namespace (see executor.run_exercise) and displays everything it produced – stdout, stderr, rich output, any exception – in a shaded ExerciseOutputWidget below the cell::\n%%exercise\nimport matplotlib.pyplot as plt\nplt.plot([1, 2, 3])\nNothing the cell defines or imports persists past that one run, and nothing the notebook has already defined is visible to it except through the cell’s own imports.\nCalled automatically on import; returns True when a live shell is found, False otherwise (e.g. plain Python).",
+    "text": "register_exercise_magic\nsandbox_widget.widget.register_exercise_magic(ipython=None)\nRegister the %%exercise cell magic (and its %%sandbox alias).\nIn IPython/Jupyter, %%exercise runs the cell body in a fresh subprocess (see executor.run_exercise) and displays everything it produced – stdout, stderr, rich output, any exception – in a shaded ExerciseOutputWidget below the cell::\n%%exercise\nimport matplotlib.pyplot as plt\nplt.plot([1, 2, 3])\n%%sandbox runs the exact same handler under a second name – both are registered from the same function, so there’s no separate implementation to keep in sync. It’s named %%sandbox rather than %%script specifically to avoid clashing with IPython’s own built-in %%script cell magic (which runs a cell through an external script interpreter, e.g. %%script bash) – an earlier version of this package registered under that name and silently replaced the built-in for the rest of the kernel session, breaking any cell relying on its real behavior. It also means a cell that uses %%sandbox before import sandbox_widget has run gets a clear “magic not found” error instead of quietly falling through to the built-in %%script and failing there in a confusing, unrelated way.\nNothing the cell defines, imports, or mutates persists past that one run, and nothing the notebook has already defined or imported is visible to it at all – not even via a sys.modules cache hit, since the cell runs in its own interpreter process.\nCalled automatically on import; returns True when a live shell is found, False otherwise (e.g. plain Python).",
     "crumbs": [
       "Widget",
       "register_exercise_magic"
@@ -188,7 +188,7 @@
     "href": "pages/overview.html",
     "title": "Overview",
     "section": "",
-    "text": "script-widget provides a Jupyter cell magic, %%exercise, that runs a cell’s body in a namespace that’s fresh on every invocation and discarded afterward. Nothing the cell defines or imports persists past that one run, and nothing the notebook has already defined is visible to it – except through the cell’s own import/from ... import statements. Everything the cell produces – stdout, stderr, rich display output, any exception – is shown in a shaded box below the cell instead of the notebook’s normal output area.",
+    "text": "sandbox-widget provides a Jupyter cell magic, %%exercise, that runs a cell’s body in a namespace that’s fresh on every invocation and discarded afterward. Nothing the cell defines or imports persists past that one run, and nothing the notebook has already defined is visible to it – except through the cell’s own import/from ... import statements. Everything the cell produces – stdout, stderr, rich display output, any exception – is shown in a shaded box below the cell instead of the notebook’s normal output area.",
     "crumbs": [
       "Overview"
     ]
@@ -198,7 +198,7 @@
     "href": "pages/overview.html#installation",
     "title": "Overview",
     "section": "Installation",
-    "text": "Installation\n\npixicondapip\n\n\npixi workspace channel add munch-group\npixi add script-widget\n\n\nconda install -c munch-group script-widget\n\n\npip install script-widget",
+    "text": "Installation\n\npixicondapip\n\n\npixi workspace channel add munch-group\npixi add sandbox-widget\n\n\nconda install -c munch-group sandbox-widget\n\n\npip install sandbox-widget",
     "crumbs": [
       "Overview"
     ]
@@ -208,7 +208,7 @@
     "href": "pages/overview.html#basic-use",
     "title": "Overview",
     "section": "Basic use",
-    "text": "Basic use\nImporting the package registers the magic:\n\nimport script_widget\n\nTag a cell %%exercise and its body runs in isolation. A trailing bare expression is displayed just like a normal notebook cell:\n\n%%exercise\na = 10\nb = 5\na + b\n\nNo event loop hook running.\n\n\n\n\n\nRich display output – including matplotlib figures – is captured too, with no plt.show() needed:\n\n%%exercise\nimport matplotlib.pyplot as plt\nplt.plot([1, 2, 3])\n\nNo event loop hook running.",
+    "text": "Basic use\nImporting the package registers the magic:\n\nimport sandbox_widget\n\nTag a cell %%exercise and its body runs in isolation. A trailing bare expression is displayed just like a normal notebook cell:\n\n%%exercise\na = 10\nb = 5\na + b\n\n\n\n\nRich display output – including matplotlib figures – is captured too, with no plt.show() needed:\n\n%%exercise\nimport matplotlib.pyplot as plt\nplt.plot([1, 2, 3])",
     "crumbs": [
       "Overview"
     ]

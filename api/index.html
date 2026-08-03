@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>index – script-widget</title>
+<title>index – sandbox-widget</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -88,7 +88,7 @@ ul.task-list li input[type="checkbox"] {
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="../index.html">
-    <span class="navbar-title">script-widget</span>
+    <span class="navbar-title">sandbox-widget</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -215,11 +215,11 @@ ul.task-list li input[type="checkbox"] {
 <table class="caption-top table">
 <tbody>
 <tr class="odd">
-<td><a href="../api/run_exercise.html#script_widget.executor.run_exercise">run_exercise</a></td>
-<td>Run <code>source</code> in a fresh, isolated namespace and capture everything</td>
+<td><a href="../api/run_exercise.html#sandbox_widget.executor.run_exercise">run_exercise</a></td>
+<td>Run <code>source</code> in a fresh, fully isolated <strong>subprocess</strong> and capture</td>
 </tr>
 <tr class="even">
-<td><a href="../api/ExerciseResult.html#script_widget.executor.ExerciseResult">ExerciseResult</a></td>
+<td><a href="../api/ExerciseResult.html#sandbox_widget.executor.ExerciseResult">ExerciseResult</a></td>
 <td>The outcome of running one <code>%%exercise</code> cell.</td>
 </tr>
 </tbody>
@@ -231,12 +231,12 @@ ul.task-list li input[type="checkbox"] {
 <table class="caption-top table">
 <tbody>
 <tr class="odd">
-<td><a href="../api/ExerciseOutputWidget.html#script_widget.widget.ExerciseOutputWidget">ExerciseOutputWidget</a></td>
+<td><a href="../api/ExerciseOutputWidget.html#sandbox_widget.widget.ExerciseOutputWidget">ExerciseOutputWidget</a></td>
 <td>Everything a <code>%%exercise</code> cell produced, rendered in a shaded box.</td>
 </tr>
 <tr class="even">
-<td><a href="../api/register_exercise_magic.html#script_widget.widget.register_exercise_magic">register_exercise_magic</a></td>
-<td>Register the <code>%%exercise</code> cell magic.</td>
+<td><a href="../api/register_exercise_magic.html#sandbox_widget.widget.register_exercise_magic">register_exercise_magic</a></td>
+<td>Register the <code>%%exercise</code> cell magic (and its <code>%%sandbox</code> alias).</td>
 </tr>
 </tbody>
 </table>

@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>run_exercise – script-widget</title>
+<title>run_exercise – sandbox-widget</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -124,7 +124,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="../index.html">
-    <span class="navbar-title">script-widget</span>
+    <span class="navbar-title">sandbox-widget</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -229,7 +229,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#script_widget.executor.run_exercise" id="toc-script_widget.executor.run_exercise" class="nav-link active" data-scroll-target="#script_widget.executor.run_exercise">run_exercise</a>
+  <li><a href="#sandbox_widget.executor.run_exercise" id="toc-sandbox_widget.executor.run_exercise" class="nav-link active" data-scroll-target="#sandbox_widget.executor.run_exercise">run_exercise</a>
   <ul class="collapse">
   <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
   <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
@@ -243,10 +243,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<section id="script_widget.executor.run_exercise" class="level1">
+<section id="sandbox_widget.executor.run_exercise" class="level1">
 <h1>run_exercise</h1>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>script_widget.executor.run_exercise(source, ip<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Run <code>source</code> in a fresh, isolated namespace and capture everything it produced.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>sandbox_widget.executor.run_exercise(source)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Run <code>source</code> in a fresh, fully isolated <strong>subprocess</strong> and capture everything it produced.</p>
+<p>The cell body runs in a brand-new Python interpreter – spawned via <code>multiprocessing</code> (the <code>"spawn"</code> start method specifically: safe to call from a live, multi-threaded Jupyter kernel process, unlike <code>fork</code>), one disposable process per call, never reused across cells. That’s what makes the isolation real: an <code>import</code> inside the cell always gets a genuinely fresh module, even for something the notebook has already imported – there’s no <code>sys.modules</code> cache hit handing back the notebook’s own live object, and no way for the cell to mutate shared state (e.g.&nbsp;matplotlib <code>rcParams</code>) that’s still visible once the subprocess exits.</p>
+<p>The subprocess sets up its own throwaway IPython shell (via <code>IPython.testing.globalipapp</code>, with <code>%matplotlib inline</code> enabled) so stdout/stderr, rich <code>display()</code> output, and matplotlib figures are still captured exactly as before – that capture machinery (<code>_run_with_ipython</code>) is unchanged, just running on the other side of a process boundary now. One consequence: a figure drawn inside <code>%%exercise</code> renders with a pristine default backend/rcParams, not whatever the notebook’s own matplotlib session has been configured to at runtime – there’s no live session left to share.</p>
 <section id="parameters" class="level2 doc-section doc-section-parameters">
 <h2 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h2>
 <dl>
@@ -254,16 +256,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <dd>
 <p>The cell body.</p>
 </dd>
-<dt><code><span class="parameter-name"><strong>ip</strong></span> <span class="parameter-annotation-sep">:</span> <span class="parameter-annotation"><code>InteractiveShell</code> or None</span> <span class="parameter-default-sep">=</span> <span class="parameter-default">None</span></code></dt>
-<dd>
-<p>The live IPython shell, if any. When given, stdout/stderr and rich display output (<code>display(...)</code> calls, a trailing bare expression’s repr, matplotlib figures) are captured via <code>IPython.utils.capture.capture_output</code>, and the shell’s <code>post_execute</code> event is triggered after running so any matplotlib-inline flush hook fires exactly as it would after a normal cell. Without <code>ip</code> (e.g.&nbsp;under plain <code>pytest</code>), only stdout/stderr are captured and the trailing value (if any) is reported as a <code>text/plain</code> output.</p>
-</dd>
 </dl>
 </section>
 <section id="returns" class="level2 doc-section doc-section-returns">
 <h2 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h2>
 <dl>
-<dt><code><span class="parameter-name"></span> <span class="parameter-annotation-sep">:</span> <span class="parameter-annotation"><a href="../api/ExerciseResult.html#script_widget.executor.ExerciseResult">ExerciseResult</a></span></code></dt>
+<dt><code><span class="parameter-name"></span> <span class="parameter-annotation-sep">:</span> <span class="parameter-annotation"><a href="../api/ExerciseResult.html#sandbox_widget.executor.ExerciseResult">ExerciseResult</a></span></code></dt>
 <dd>
 
 </dd>
