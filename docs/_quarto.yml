@@ -37,7 +37,7 @@ interlinks:
     #   inv: objects-test.txt
 
 website:
-  title: "script-widget"
+  title: "sandbox-widget"
   page-navigation: true
   navbar:
     left:
@@ -76,7 +76,7 @@ format:
       theme: neutral 
 
 quartodoc:
-  package: script-widget
+  package: sandbox-widget
   style: pkgdown
   dir: api
   render_interlinks: true
@@ -90,7 +90,7 @@ quartodoc:
 
   sections:
     - title: Executor
-      package: script_widget.executor
+      package: sandbox_widget.executor
       desc: |
         The engine behind `%%exercise`: run a cell body in a fresh, isolated
         namespace and capture everything it produced.
@@ -98,7 +98,7 @@ quartodoc:
         - run_exercise
         - ExerciseResult
     - title: Widget
-      package: script_widget.widget
+      package: sandbox_widget.widget
       desc: |
         The `anywidget`-based output widget and the `%%exercise` cell magic.
       contents:

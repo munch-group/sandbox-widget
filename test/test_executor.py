@@ -7,7 +7,7 @@ path, and every test here pays real subprocess-spawn latency.
 """
 import re
 
-from script_widget.executor import run_exercise
+from sandbox_widget.executor import run_exercise
 
 
 def _strip_ansi(text):
@@ -87,7 +87,7 @@ def test_traceback_shows_the_cells_own_source_line():
 
 def test_traceback_does_not_leak_internal_executor_frames():
     # A student running this same code as a plain script would never see
-    # script_widget's own exec/eval plumbing (_last_line_value,
+    # sandbox_widget's own exec/eval plumbing (_last_line_value,
     # _run_with_ipython) -- only their own code, and anything it calls into.
     result = run_exercise("def f():\n    1 / 0\n\nf()\n")
     assert result.success is False

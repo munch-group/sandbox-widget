@@ -1,9 +1,9 @@
 """Headless tests for ``ExerciseOutputWidget`` and the ``%%exercise`` magic."""
 import types
 
-from script_widget import ExerciseOutputWidget
-from script_widget.executor import ExerciseResult
-from script_widget.widget import register_exercise_magic
+from sandbox_widget import ExerciseOutputWidget
+from sandbox_widget.executor import ExerciseResult
+from sandbox_widget.widget import register_exercise_magic
 
 
 def test_widget_copies_a_successful_result():
@@ -32,7 +32,7 @@ def test_register_exercise_magic_without_a_live_shell_returns_false(monkeypatch)
     # run_exercise's own throwaway shell now lives in a subprocess -- but
     # asserting on a real function result shouldn't depend on that happening
     # to stay true either).
-    from script_widget import widget as widget_module
+    from sandbox_widget import widget as widget_module
 
     monkeypatch.setattr(widget_module, "get_ipython", lambda: None)
     assert register_exercise_magic(ipython=None) is False
@@ -59,9 +59,11 @@ def test_register_exercise_magic_registers_the_cell_magic():
     assert shell.magics_manager.magics["cell"]["exercise"].__name__ == "exercise"
 
 
-def test_script_is_a_plain_alias_for_exercise():
-    # %%script isn't a separate implementation -- it's the exact same
-    # handler function registered under a second name.
+def test_sandbox_is_a_plain_alias_for_exercise():
+    # %%sandbox isn't a separate implementation -- it's the exact same
+    # handler function registered under a second name (named %%sandbox,
+    # not %%script, specifically so it doesn't clash with IPython's own
+    # built-in %%script cell magic).
     shell = _FakeShell(cell_magics={})
     register_exercise_magic(ipython=shell)
-    assert shell.magics_manager.magics["cell"]["script"] is shell.magics_manager.magics["cell"]["exercise"]
+    assert shell.magics_manager.magics["cell"]["sandbox"] is shell.magics_manager.magics["cell"]["exercise"]

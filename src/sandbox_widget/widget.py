@@ -1,4 +1,4 @@
-"""script_widget.widget
+"""sandbox_widget.widget
 =======================
 
 A Jupyter widget that runs a cell body in a fresh, isolated namespace (see
@@ -11,12 +11,12 @@ instead of the notebook's normal (unstyled) output area.
   Colab.
 * All execution/capture logic lives in ``executor.py``; this module only
   wraps the result in a synced-traitlets widget and wires up the
-  ``%%exercise`` cell magic (``%%script`` is a plain alias for the same
+  ``%%exercise`` cell magic (``%%sandbox`` is a plain alias for the same
   magic -- see ``register_exercise_magic``).
 
 Usage
 -----
-    import script_widget  # registers the %%exercise cell magic (and %%script)
+    import sandbox_widget  # registers the %%exercise cell magic (and %%sandbox)
 
     %%exercise
     import matplotlib.pyplot as plt
@@ -337,7 +337,7 @@ class ExerciseOutputWidget(anywidget.AnyWidget):
 
     Parameters
     ----------
-    result : script_widget.executor.ExerciseResult
+    result : sandbox_widget.executor.ExerciseResult
         The outcome of ``run_exercise``. All traits below are copied from
         it once at construction time and never change afterward.
 
@@ -377,7 +377,7 @@ class ExerciseOutputWidget(anywidget.AnyWidget):
         # brand-new anywidget ESM module is still being evaluated), drawing
         # the box from the initial empty state before the stdout/stderr/etc.
         # update messages are processed. This is what made the very first
-        # `%%exercise`/`%%script` cell in a kernel session show up with no
+        # `%%exercise`/`%%sandbox` cell in a kernel session show up with no
         # stdout, self-correcting on the very next run once the frontend was
         # warmed up.
         super().__init__(
@@ -398,7 +398,7 @@ class ExerciseOutputWidget(anywidget.AnyWidget):
 
 
 def register_exercise_magic(ipython=None):
-    r"""Register the `%%exercise` cell magic (and its `%%script` alias).
+    r"""Register the `%%exercise` cell magic (and its `%%sandbox` alias).
 
     In IPython/Jupyter, `%%exercise` runs the cell body in a fresh
     subprocess (see ``executor.run_exercise``) and displays everything it
@@ -409,9 +409,18 @@ def register_exercise_magic(ipython=None):
         import matplotlib.pyplot as plt
         plt.plot([1, 2, 3])
 
-    `%%script` runs the exact same handler under a second name -- both are
+    `%%sandbox` runs the exact same handler under a second name -- both are
     registered from the same function, so there's no separate
-    implementation to keep in sync.
+    implementation to keep in sync. It's named `%%sandbox` rather than
+    `%%script` specifically to avoid clashing with IPython's own built-in
+    `%%script` cell magic (which runs a cell through an external script
+    interpreter, e.g. `%%script bash`) -- an earlier version of this
+    package registered under that name and silently replaced the built-in
+    for the rest of the kernel session, breaking any cell relying on its
+    real behavior. It also means a cell that uses `%%sandbox` before
+    `import sandbox_widget` has run gets a clear "magic not found" error
+    instead of quietly falling through to the built-in `%%script` and
+    failing there in a confusing, unrelated way.
 
     Nothing the cell defines, imports, or mutates persists past that one
     run, and nothing the notebook has already defined or imported is
@@ -430,7 +439,7 @@ def register_exercise_magic(ipython=None):
         _ipy_display(ExerciseOutputWidget(result))
 
     ip.register_magic_function(exercise, magic_kind="cell", magic_name="exercise")
-    ip.register_magic_function(exercise, magic_kind="cell", magic_name="script")
+    ip.register_magic_function(exercise, magic_kind="cell", magic_name="sandbox")
     return True
 
 

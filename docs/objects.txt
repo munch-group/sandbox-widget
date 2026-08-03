@@ -1,8 +1,8 @@
 # Sphinx inventory version 2
-# Project: script-widget
+# Project: sandbox-widget
 # Version: 0.0.9999
 # The remainder of this file is compressed using zlib.
-script_widget.executor.run_exercise py:function 1 api/run_exercise.html#script_widget.executor.run_exercise -
-script_widget.executor.ExerciseResult py:class 1 api/ExerciseResult.html#script_widget.executor.ExerciseResult -
-script_widget.widget.ExerciseOutputWidget py:class 1 api/ExerciseOutputWidget.html#script_widget.widget.ExerciseOutputWidget -
-script_widget.widget.register_exercise_magic py:function 1 api/register_exercise_magic.html#script_widget.widget.register_exercise_magic -
+sandbox_widget.executor.run_exercise py:function 1 api/run_exercise.html#sandbox_widget.executor.run_exercise -
+sandbox_widget.executor.ExerciseResult py:class 1 api/ExerciseResult.html#sandbox_widget.executor.ExerciseResult -
+sandbox_widget.widget.ExerciseOutputWidget py:class 1 api/ExerciseOutputWidget.html#sandbox_widget.widget.ExerciseOutputWidget -
+sandbox_widget.widget.register_exercise_magic py:function 1 api/register_exercise_magic.html#sandbox_widget.widget.register_exercise_magic -

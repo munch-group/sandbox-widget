@@ -1,7 +1,7 @@
-# ExerciseResult { #script_widget.executor.ExerciseResult }
+# ExerciseResult { #sandbox_widget.executor.ExerciseResult }
 
 ```python
-script_widget.executor.ExerciseResult(
+sandbox_widget.executor.ExerciseResult(
     stdout='',
     stderr='',
     outputs=None,
@@ -24,7 +24,7 @@ The outcome of running one ``%%exercise`` cell.
 
 <code>[**outputs**]{.parameter-name} [:]{.parameter-annotation-sep} [list of dict]{.parameter-annotation}</code>
 
-:   Rich display MIME bundles produced by the cell -- a trailing bare expression's repr, an explicit ``display(...)`` call, or (when run with a live IPython shell) a matplotlib figure flushed after execution. Each entry maps MIME type to its data, e.g. ``{"image/png": "<base64>", "text/plain": "..."}``.
+:   Rich display MIME bundles produced by the cell -- a trailing bare expression's repr, an explicit ``display(...)`` call, or a matplotlib figure flushed after execution. Each entry maps MIME type to its data, e.g. ``{"image/png": "<base64>", "text/plain": "..."}``.
 
 <code>[**error**]{.parameter-name} [:]{.parameter-annotation-sep} [[str](`str`) or None]{.parameter-annotation}</code>
 
@@ -32,4 +32,4 @@ The outcome of running one ``%%exercise`` cell.
 
 <code>[**traceback**]{.parameter-name} [:]{.parameter-annotation-sep} [[str](`str`) or None]{.parameter-annotation}</code>
 
-:   The full formatted traceback for ``error``, else ``None``.
+:   The full formatted traceback for ``error``, else ``None``. Carries the same ANSI color codes as a normal uncaught-exception traceback (captured via the subprocess's own ``ip.InteractiveTB``), except for a plain-text ``SyntaxError`` (caught before the subprocess's shell is even set up) or a subprocess that died outright.

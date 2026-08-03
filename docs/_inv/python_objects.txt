@@ -931,6 +931,10 @@ PyErr_BadArgument c:function 1 c-api/exceptions.html#c.$ -
 PyErr_BadInternalCall c:function 1 c-api/exceptions.html#c.$ -
 PyErr_CheckSignals c:function 1 c-api/exceptions.html#c.$ -
 PyErr_Clear c:function 1 c-api/exceptions.html#c.$ -
+PyErr_Display c:function 1 c-api/exceptions.html#c.$ -
+PyErr_Display.tb c:functionParam 1 c-api/exceptions.html#c.PyErr_Display -
+PyErr_Display.unused c:functionParam 1 c-api/exceptions.html#c.PyErr_Display -
+PyErr_Display.value c:functionParam 1 c-api/exceptions.html#c.PyErr_Display -
 PyErr_DisplayException c:function 1 c-api/exceptions.html#c.$ -
 PyErr_DisplayException.exc c:functionParam 1 c-api/exceptions.html#c.PyErr_DisplayException -
 PyErr_ExceptionMatches c:function 1 c-api/exceptions.html#c.$ -
@@ -7026,6 +7030,7 @@ dict.update py:method 1 library/stdtypes.html#$ -
 dict.values py:method 1 library/stdtypes.html#$ -
 difflib py:module 0 library/difflib.html#module-$ -
 difflib.Differ py:class 1 library/difflib.html#$ -
+difflib.Differ.__init__ py:method 1 library/difflib.html#$ -
 difflib.Differ.compare py:method 1 library/difflib.html#$ -
 difflib.HtmlDiff py:class 1 library/difflib.html#$ -
 difflib.HtmlDiff.__init__ py:method 1 library/difflib.html#$ -
@@ -9192,6 +9197,19 @@ logging.setLoggerClass py:function 1 library/logging.html#$ -
 logging.shutdown py:function 1 library/logging.html#$ -
 logging.warning py:function 1 library/logging.html#$ -
 lzma py:module 0 library/lzma.html#module-$ -
+lzma.CHECK_CRC32 py:data 1 library/lzma.html#$ -
+lzma.CHECK_CRC64 py:data 1 library/lzma.html#$ -
+lzma.CHECK_ID_MAX py:data 1 library/lzma.html#$ -
+lzma.CHECK_NONE py:data 1 library/lzma.html#$ -
+lzma.CHECK_SHA256 py:data 1 library/lzma.html#$ -
+lzma.CHECK_UNKNOWN py:data 1 library/lzma.html#$ -
+lzma.FILTER_DELTA py:data 1 library/lzma.html#$ -
+lzma.FILTER_LZMA1 py:data 1 library/lzma.html#$ -
+lzma.FILTER_LZMA2 py:data 1 library/lzma.html#$ -
+lzma.FORMAT_ALONE py:data 1 library/lzma.html#$ -
+lzma.FORMAT_AUTO py:data 1 library/lzma.html#$ -
+lzma.FORMAT_RAW py:data 1 library/lzma.html#$ -
+lzma.FORMAT_XZ py:data 1 library/lzma.html#$ -
 lzma.LZMACompressor py:class 1 library/lzma.html#$ -
 lzma.LZMACompressor.compress py:method 1 library/lzma.html#$ -
 lzma.LZMACompressor.flush py:method 1 library/lzma.html#$ -
@@ -9206,6 +9224,15 @@ lzma.LZMAFile py:class 1 library/lzma.html#$ -
 lzma.LZMAFile.mode py:attribute 1 library/lzma.html#$ -
 lzma.LZMAFile.name py:attribute 1 library/lzma.html#$ -
 lzma.LZMAFile.peek py:method 1 library/lzma.html#$ -
+lzma.MF_BT2 py:data 1 library/lzma.html#$ -
+lzma.MF_BT3 py:data 1 library/lzma.html#$ -
+lzma.MF_BT4 py:data 1 library/lzma.html#$ -
+lzma.MF_HC3 py:data 1 library/lzma.html#$ -
+lzma.MF_HC4 py:data 1 library/lzma.html#$ -
+lzma.MODE_FAST py:data 1 library/lzma.html#$ -
+lzma.MODE_NORMAL py:data 1 library/lzma.html#$ -
+lzma.PRESET_DEFAULT py:data 1 library/lzma.html#$ -
+lzma.PRESET_EXTREME py:data 1 library/lzma.html#$ -
 lzma.compress py:function 1 library/lzma.html#$ -
 lzma.decompress py:function 1 library/lzma.html#$ -
 lzma.is_check_supported py:function 1 library/lzma.html#$ -
@@ -12650,6 +12677,8 @@ test.support.is_emscripten py:data 1 library/test.html#$ -
 test.support.is_jython py:data 1 library/test.html#$ -
 test.support.is_resource_enabled py:function 1 library/test.html#$ -
 test.support.is_wasi py:data 1 library/test.html#$ -
+test.support.isolation.runInSubprocess py:function 1 library/test.html#$ -
+test.support.isolation.runningInSubprocess py:data 1 library/test.html#$ -
 test.support.linked_to_musl py:function 1 library/test.html#$ -
 test.support.load_package_tests py:function 1 library/test.html#$ -
 test.support.max_memuse py:data 1 library/test.html#$ -
@@ -16609,8 +16638,11 @@ dictionary comprehension std:term -1 glossary.html#term-dictionary-comprehension
 dictionary view std:term -1 glossary.html#term-dictionary-view -
 dictobjects std:label -1 c-api/dict.html#$ Dictionary Objects
 differ-examples std:label -1 library/difflib.html#$ Differ example
-differ-objects std:label -1 library/difflib.html#$ Differ objects
+differ-objects std:label -1 library/difflib.html#$ -
+difflib-diff-generation std:label -1 library/difflib.html#$ Diff generation
 difflib-interface std:label -1 library/difflib.html#$ A command-line interface to difflib
+difflib-isjunk-functions std:label -1 library/difflib.html#$ Junk definition functions
+difflib-junk std:label -1 library/difflib.html#$ Junk heuristic
 dir_fd std:label -1 library/os.html#dir-fd -
 dircmp-objects std:label -1 library/filecmp.html#$ The dircmp class
 dis-cli std:label -1 library/dis.html#$ Command-line interface

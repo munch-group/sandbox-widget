@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "script-widget"
+name = "sandbox-widget"
 version = "1.0.3"
 description = "Jupyter widget that runs a cell in a fresh, isolated namespace (the %%exercise cell magic)"
 authors = [
@@ -35,7 +35,7 @@ where = ["src"]
 exclude = ["test*"]
 
 [tool.setuptools.package-data]
-script_widget = ["data/*.txt", "data/*.csv", "data/*.pickle", "data/*.h5"]
+sandbox_widget = ["data/*.txt", "data/*.csv", "data/*.pickle", "data/*.h5"]
 
 [tool.pixi.workspace]
 channels = ["conda-forge", "munch-group"]
@@ -51,8 +51,8 @@ quartodoc = ">=0.11.1,<0.12"
 # runtime dependency, but hardcodes a numpy-docstring parser option
 # ("allow_section_blank_line") that griffe 2.x removed from parse_numpy()'s
 # signature -- an upstream packaging gap (missing "<2" cap), not a
-# script-widget bug. Pin griffe below 2 here until quartodoc/conda-forge fixes
-# their own bound (see puzzle-widget's pyproject.toml for the same pin).
+# sandbox-widget bug. Pin griffe below 2 here until quartodoc/conda-forge
+# fixes their own bound (see puzzle-widget's pyproject.toml for the same pin).
 griffe = "<2"
 nbconvert = "*"
 pip = ">=25.2,<26"
@@ -64,12 +64,12 @@ ipython = "*"
 nbdime = "*"
 jq = "*"
 anywidget = ">=0.11.0,<0.12"
-# Dev/test only (not a script_widget runtime dependency) -- exercises the
+# Dev/test only (not a sandbox_widget runtime dependency) -- exercises the
 # %%exercise -> matplotlib figure capture path in test/test_executor.py.
 matplotlib-base = "*"
 
 # [tool.pixi.pypi-dependencies]
-# script-widget = { path = ".", editable = true }
+# sandbox-widget = { path = ".", editable = true }
 
 [tool.pixi.environments]
 default = {solve-group = "default"}

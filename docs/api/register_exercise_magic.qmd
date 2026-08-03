@@ -1,13 +1,13 @@
-# register_exercise_magic { #script_widget.widget.register_exercise_magic }
+# register_exercise_magic { #sandbox_widget.widget.register_exercise_magic }
 
 ```python
-script_widget.widget.register_exercise_magic(ipython=None)
+sandbox_widget.widget.register_exercise_magic(ipython=None)
 ```
 
-Register the `%%exercise` cell magic.
+Register the `%%exercise` cell magic (and its `%%sandbox` alias).
 
-In IPython/Jupyter, `%%exercise` runs the cell body in a fresh, isolated
-namespace (see ``executor.run_exercise``) and displays everything it
+In IPython/Jupyter, `%%exercise` runs the cell body in a fresh
+subprocess (see ``executor.run_exercise``) and displays everything it
 produced -- stdout, stderr, rich output, any exception -- in a shaded
 ``ExerciseOutputWidget`` below the cell::
 
@@ -15,9 +15,23 @@ produced -- stdout, stderr, rich output, any exception -- in a shaded
     import matplotlib.pyplot as plt
     plt.plot([1, 2, 3])
 
-Nothing the cell defines or imports persists past that one run, and
-nothing the notebook has already defined is visible to it except
-through the cell's own imports.
+`%%sandbox` runs the exact same handler under a second name -- both are
+registered from the same function, so there's no separate
+implementation to keep in sync. It's named `%%sandbox` rather than
+`%%script` specifically to avoid clashing with IPython's own built-in
+`%%script` cell magic (which runs a cell through an external script
+interpreter, e.g. `%%script bash`) -- an earlier version of this
+package registered under that name and silently replaced the built-in
+for the rest of the kernel session, breaking any cell relying on its
+real behavior. It also means a cell that uses `%%sandbox` before
+`import sandbox_widget` has run gets a clear "magic not found" error
+instead of quietly falling through to the built-in `%%script` and
+failing there in a confusing, unrelated way.
+
+Nothing the cell defines, imports, or mutates persists past that one
+run, and nothing the notebook has already defined or imported is
+visible to it at all -- not even via a ``sys.modules`` cache hit, since
+the cell runs in its own interpreter process.
 
 Called automatically on import; returns True when a live shell is
 found, False otherwise (e.g. plain Python).

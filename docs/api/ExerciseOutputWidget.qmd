@@ -1,14 +1,14 @@
-# ExerciseOutputWidget { #script_widget.widget.ExerciseOutputWidget }
+# ExerciseOutputWidget { #sandbox_widget.widget.ExerciseOutputWidget }
 
 ```python
-script_widget.widget.ExerciseOutputWidget(result)
+sandbox_widget.widget.ExerciseOutputWidget(result)
 ```
 
 Everything a ``%%exercise`` cell produced, rendered in a shaded box.
 
 ## Parameters {.doc-section .doc-section-parameters}
 
-<code>[**result**]{.parameter-name} [:]{.parameter-annotation-sep} [[script_widget](`script_widget`).[executor](`script_widget.executor`).[ExerciseResult](`script_widget.executor.ExerciseResult`)]{.parameter-annotation}</code>
+<code>[**result**]{.parameter-name} [:]{.parameter-annotation-sep} [[sandbox_widget](`sandbox_widget`).[executor](`sandbox_widget.executor`).[ExerciseResult](`sandbox_widget.executor.ExerciseResult`)]{.parameter-annotation}</code>
 
 :   The outcome of ``run_exercise``. All traits below are copied from it once at construction time and never change afterward.
 

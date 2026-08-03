@@ -1,7 +1,7 @@
 {% set pyproject = load_file_data("../pyproject.toml", from_recipe_dir=True) %}
 
 package:
-  name: script-widget
+  name: sandbox-widget
   version: {{ pyproject.get("project").get("version") }}
 
 source:
@@ -12,7 +12,7 @@ build:
   script: {{ PYTHON }} -m pip install . -vv
   python_version_independent: true
   # entry_points:
-  #  - script-widget = script_widget:script_widget
+  #  - sandbox-widget = sandbox_widget:sandbox_widget
 
 requirements:
   host:
@@ -37,7 +37,7 @@ dependencies:   # keep this block with only these packages
 
 test:
   imports:
-    - script_widget
+    - sandbox_widget
 
 about:
   home: https://github.com/munch-group/script-widget.git

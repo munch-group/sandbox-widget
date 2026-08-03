@@ -1,11 +1,32 @@
-# run_exercise { #script_widget.executor.run_exercise }
+# run_exercise { #sandbox_widget.executor.run_exercise }
 
 ```python
-script_widget.executor.run_exercise(source, ip=None)
+sandbox_widget.executor.run_exercise(source)
 ```
 
-Run ``source`` in a fresh, isolated namespace and capture everything
-it produced.
+Run ``source`` in a fresh, fully isolated **subprocess** and capture
+everything it produced.
+
+The cell body runs in a brand-new Python interpreter -- spawned via
+``multiprocessing`` (the ``"spawn"`` start method specifically: safe to
+call from a live, multi-threaded Jupyter kernel process, unlike
+``fork``), one disposable process per call, never reused across cells.
+That's what makes the isolation real: an ``import`` inside the cell
+always gets a genuinely fresh module, even for something the notebook
+has already imported -- there's no ``sys.modules`` cache hit handing
+back the notebook's own live object, and no way for the cell to mutate
+shared state (e.g. matplotlib ``rcParams``) that's still visible once
+the subprocess exits.
+
+The subprocess sets up its own throwaway IPython shell (via
+``IPython.testing.globalipapp``, with ``%matplotlib inline`` enabled)
+so stdout/stderr, rich ``display()`` output, and matplotlib figures are
+still captured exactly as before -- that capture machinery
+(``_run_with_ipython``) is unchanged, just running on the other side of
+a process boundary now. One consequence: a figure drawn inside
+``%%exercise`` renders with a pristine default backend/rcParams, not
+whatever the notebook's own matplotlib session has been configured to
+at runtime -- there's no live session left to share.
 
 ## Parameters {.doc-section .doc-section-parameters}
 
@@ -13,12 +34,8 @@ it produced.
 
 :   The cell body.
 
-<code>[**ip**]{.parameter-name} [:]{.parameter-annotation-sep} [[InteractiveShell](`InteractiveShell`) or None]{.parameter-annotation} [ = ]{.parameter-default-sep} [None]{.parameter-default}</code>
-
-:   The live IPython shell, if any. When given, stdout/stderr and rich display output (``display(...)`` calls, a trailing bare expression's repr, matplotlib figures) are captured via ``IPython.utils.capture.capture_output``, and the shell's ``post_execute`` event is triggered after running so any matplotlib-inline flush hook fires exactly as it would after a normal cell. Without ``ip`` (e.g. under plain ``pytest``), only stdout/stderr are captured and the trailing value (if any) is reported as a ``text/plain`` output.
-
 ## Returns {.doc-section .doc-section-returns}
 
-<code>[]{.parameter-name} [:]{.parameter-annotation-sep} [[ExerciseResult](`script_widget.executor.ExerciseResult`)]{.parameter-annotation}</code>
+<code>[]{.parameter-name} [:]{.parameter-annotation-sep} [[ExerciseResult](`sandbox_widget.executor.ExerciseResult`)]{.parameter-annotation}</code>
 
 :   

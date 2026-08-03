@@ -8,8 +8,8 @@ namespace and capture everything it produced.
 
 | | |
 | --- | --- |
-| [run_exercise](run_exercise.qmd#script_widget.executor.run_exercise) | Run ``source`` in a fresh, isolated namespace and capture everything |
-| [ExerciseResult](ExerciseResult.qmd#script_widget.executor.ExerciseResult) | The outcome of running one ``%%exercise`` cell. |
+| [run_exercise](run_exercise.qmd#sandbox_widget.executor.run_exercise) | Run ``source`` in a fresh, fully isolated **subprocess** and capture |
+| [ExerciseResult](ExerciseResult.qmd#sandbox_widget.executor.ExerciseResult) | The outcome of running one ``%%exercise`` cell. |
 
 ## Widget
 
@@ -18,5 +18,5 @@ The `anywidget`-based output widget and the `%%exercise` cell magic.
 
 | | |
 | --- | --- |
-| [ExerciseOutputWidget](ExerciseOutputWidget.qmd#script_widget.widget.ExerciseOutputWidget) | Everything a ``%%exercise`` cell produced, rendered in a shaded box. |
-| [register_exercise_magic](register_exercise_magic.qmd#script_widget.widget.register_exercise_magic) | Register the `%%exercise` cell magic. |
+| [ExerciseOutputWidget](ExerciseOutputWidget.qmd#sandbox_widget.widget.ExerciseOutputWidget) | Everything a ``%%exercise`` cell produced, rendered in a shaded box. |
+| [register_exercise_magic](register_exercise_magic.qmd#sandbox_widget.widget.register_exercise_magic) | Register the `%%exercise` cell magic (and its `%%sandbox` alias). |

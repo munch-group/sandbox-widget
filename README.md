@@ -1,5 +1,5 @@
 
-# script-widget
+# sandbox-widget
 
 A Jupyter cell magic that runs a cell in a fresh, isolated namespace and
 shows everything it produced -- stdout, stderr, rich display output, any
@@ -7,7 +7,7 @@ exception -- in a shaded box below the cell, built on
 [anywidget](https://anywidget.dev).
 
 ```python
-import script_widget  # registers the %%exercise cell magic
+import sandbox_widget  # registers the %%exercise cell magic
 ```
 
 ```
@@ -29,13 +29,13 @@ nothing is reloaded or reinitialized, and no kernel restart happens.
 ```bash
 # pixi
 pixi workspace channel add munch-group
-pixi add script-widget
+pixi add sandbox-widget
 
 # conda
-conda install -c munch-group script-widget
+conda install -c munch-group sandbox-widget
 
 # pip
-pip install script-widget
+pip install sandbox-widget
 ```
 
 ## Writing a `%%exercise` cell

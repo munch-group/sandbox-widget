@@ -1,4 +1,4 @@
-"""Make ``script_widget`` importable from ``src/`` without an editable install.
+"""Make ``sandbox_widget`` importable from ``src/`` without an editable install.
 
 Lets ``pytest test/`` work straight from a checkout (the ``pixi run test`` task,
 CI) whether or not ``pixi run install-dev`` has been run. There is deliberately no

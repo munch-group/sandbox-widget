@@ -1,4 +1,4 @@
-"""script_widget.executor
+"""sandbox_widget.executor
 =========================
 
 The engine behind the ``%%exercise`` widget: run a cell body in a **fresh
@@ -208,7 +208,7 @@ def _make_headless_shell():
         with contextlib.redirect_stdout(io.StringIO()):
             shell.run_line_magic("matplotlib", "inline")
     except Exception:
-        # matplotlib isn't a script_widget runtime dependency (dev/test
+        # matplotlib isn't a sandbox_widget runtime dependency (dev/test
         # only) -- fine if it's simply not installed here.
         pass
     # globalipapp's TerminalInteractiveShell restricts rich display to
@@ -243,7 +243,7 @@ def _run_with_ipython(tree, namespace, ip, source):
             # here and the cell's own code -- so what's left matches what
             # running the same code as a plain script would show: only the
             # cell's frames (and anything deeper they call into), nothing
-            # from script_widget itself.
+            # from sandbox_widget itself.
             stb = ip.InteractiveTB.structured_traceback(*sys.exc_info(), tb_offset=2)
             tb = ip.InteractiveTB.stb2text(stb)
         finally:

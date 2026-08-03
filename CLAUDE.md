@@ -3,9 +3,10 @@
 This file provides guidance to Claude Code (claude.ai/code) when working
 with code in this repository.
 
-Project context for `script-widget` -- a Jupyter cell magic that runs a cell
-in a fresh, fully isolated subprocess, built on
-[anywidget](https://anywidget.dev).
+Project context for `sandbox-widget` -- a Jupyter cell magic that runs a
+cell in a fresh, fully isolated subprocess, built on
+[anywidget](https://anywidget.dev). The GitHub repo and local folder are
+still named `script-widget` -- see the note below.
 
 ## What this is
 
@@ -30,17 +31,29 @@ logic is split out into its own `executor.py` for the same reason
 `puzzle-widget` splits out `checker.py`: it's independently useful and
 (mostly) unit-testable without a live IPython shell.
 
-Note: the package and repo are still named `script_widget`/`script-widget`
-even though the magic itself is `%%exercise` -- that mismatch is
-deliberate, not leftover from a partial rename (a full package/repo rename
-would touch the repo's identity: folder location, PyPI/conda package name,
-GitHub URLs -- out of scope for a magic-name change alone).
+Note: the identifiers now diverge **three** ways, each deliberate:
+
+- The **magic name** is `%%exercise` (canonical), with a `%%sandbox` alias
+  -- not `%%script`, specifically to avoid clashing with IPython's own
+  built-in `%%script` cell magic (see "Package layout" below).
+- The **importable module / PyPI-conda package name** is
+  `sandbox_widget`/`sandbox-widget` (renamed from `script_widget`/
+  `script-widget`).
+- The **GitHub repo and local folder** are still named `script-widget` --
+  that rename was explicitly out of scope when the package/module was
+  renamed to `sandbox-widget`/`sandbox_widget`: it would touch the repo's
+  identity (folder location, GitHub URLs, git history) rather than just
+  the installable package, a bigger and more disruptive change than
+  renaming the package alone. Links to `github.com/munch-group/
+  script-widget` and the docs site `munch-group.org/script-widget` are
+  correct as they stand -- don't "fix" them to say `sandbox-widget` unless
+  the repo itself gets renamed too.
 
 ## Package layout
 
-The package is `script_widget` under `src/`:
+The package is `sandbox_widget` under `src/`:
 
-- `src/script_widget/executor.py` -- the engine. `run_exercise(source)`
+- `src/sandbox_widget/executor.py` -- the engine. `run_exercise(source)`
   spawns a subprocess (`multiprocessing.get_context("spawn")`, one
   disposable process per call, never reused -- see "Architecture" below
   for why not `fork`) and hands it off to `_child_main`, which runs
@@ -63,24 +76,33 @@ The package is `script_widget` under `src/`:
   `.stb2text()` -- see "Colored tracebacks" under Architecture), or the
   subprocess dying outright (reported as a generic `.error` with the
   child's exit code).
-- `src/script_widget/widget.py` -- `ExerciseOutputWidget` (the
+- `src/sandbox_widget/widget.py` -- `ExerciseOutputWidget` (the
   `anywidget.AnyWidget`) + the embedded `_ESM`/`_CSS` frontend strings +
   `register_exercise_magic()`, which registers both `%%exercise` (the
-  canonical name) and `%%script` (a plain alias -- same handler function
+  canonical name) and `%%sandbox` (a plain alias -- same handler function
   registered under a second `magic_name`, not a separate implementation).
-  The widget's traits are copied from an
+  It's `%%sandbox`, not `%%script`, specifically to avoid clashing with
+  IPython's own built-in `%%script` cell magic (which shells out to an
+  external interpreter, e.g. `%%script bash`) -- an earlier version
+  registered the alias as `%%script` and silently shadowed the built-in for
+  the rest of the kernel session, and a cell using `%%script` before
+  `sandbox_widget` had been imported hit the *built-in's* own confusing
+  failure (missing interpreter argument) rather than a clear "magic not
+  found" error. The widget's traits are copied from an
   `ExerciseResult` once at construction and never change afterward (unlike
   `puzzle_widget.PuzzleWidget`, there's no interactive re-checking), so the
   frontend's `render()` draws once from the model's initial state with no
-  change listeners. The embedded CSS's class prefix (`sw-*`) tracks the
-  package name (`script_widget`), not the magic name -- it's an internal
-  styling namespace, not user-facing. The box itself is always a plain gray
-  (no color/header change on success vs. failure); stdout and stderr are
-  merged into one white `.sw-output` block rather than two separately
-  colored ones.
-- `src/script_widget/__init__.py` -- re-exports `ExerciseResult`/
+  change listeners. The embedded CSS's class prefix (`sw-*`) predates the
+  package rename -- it stood for "script widget" back when the package was
+  `script_widget` -- but reads just as naturally as "sandbox widget" now,
+  so it wasn't changed; it's an internal styling namespace, not
+  user-facing, so there's no user-visible reason to touch it. The box
+  itself is always a plain gray (no color/header change on success vs.
+  failure); stdout and stderr are merged into one white `.sw-output` block
+  rather than two separately colored ones.
+- `src/sandbox_widget/__init__.py` -- re-exports `ExerciseResult`/
   `run_exercise`/`ExerciseOutputWidget`/`register_exercise_magic` from
-  `executor.py`/`widget.py`. Importing `script_widget` therefore both
+  `executor.py`/`widget.py`. Importing `sandbox_widget` therefore both
   exposes the public API and registers the cell magic as a side effect.
 - `test/` -- headless pytest suite: `test_executor.py` (the engine -- every
   test spawns a real subprocess now, so there's no more no-shell/with-shell
@@ -168,7 +190,7 @@ matplotlib session happens to be carrying.
 A `%%exercise` traceback is meant to look exactly like what a student would
 see running the same code as a plain script or in a real notebook cell --
 not a plain `traceback.format_exc()` dump, and not cluttered with
-`script_widget`'s own internal frames. Three things make that true:
+`sandbox_widget`'s own internal frames. Three things make that true:
 
 - **`_make_headless_shell` forces `shell.colors = "neutral"`.** Without
   this, there are no ANSI codes to highlight in the first place --
@@ -190,7 +212,7 @@ not a plain `traceback.format_exc()` dump, and not cluttered with
   `structured_traceback` can look up: it renders as a bare `File
   "<exercise>", line N` with no code shown beneath it at all -- not merely
   uncolored, genuinely blank, since there's nothing there to highlight.
-- **`tb_offset=2` strips `script_widget`'s own frames.** The call chain
+- **`tb_offset=2` strips `sandbox_widget`'s own frames.** The call chain
   between "where the `try` lives" and "the cell's own code" is exactly two
   functions deep (`_run_with_ipython` -> `_last_line_value`, both frames
   showing up in `sys.exc_info()`'s traceback if left alone) --
@@ -280,9 +302,18 @@ text node.
   function gets refactored) and figure capture silently degrades to a
   `text/plain` repr of the `Figure` object, not a missing output.
 - **The package/magic name mismatch is intentional, not a leftover.** The
-  package stays `script_widget`; the magic is `%%exercise`. Don't "fix"
-  this by renaming the package -- that's a separate, deliberately-deferred
-  decision (see "What this is" above).
+  package is `sandbox_widget`; the magic is `%%exercise` (with a
+  `%%sandbox` alias). Don't "fix" this by renaming the package to match
+  the magic name -- see the note in "What this is" above.
+- **The repo/folder name (`script-widget`) no longer matches the package
+  name (`sandbox-widget`), and that's also intentional.** The package was
+  renamed from `script_widget`/`script-widget` to `sandbox_widget`/
+  `sandbox-widget`, but the GitHub repo and local folder were deliberately
+  left as `script-widget` -- see the note in "What this is" above. Don't
+  "fix" GitHub/docs-site URLs to say `sandbox-widget` without actually
+  renaming the repo first; as of this rename they still correctly point at
+  `github.com/munch-group/script-widget` and
+  `munch-group.org/script-widget`.
 
 ## Environment & commands
 
@@ -295,13 +326,13 @@ Pixi-managed (config in `pyproject.toml` under `[tool.pixi.*]`; channels
 
 - Dev install: `pixi run install-dev` (`pip install --no-build-isolation
   --force-reinstall --no-deps .` -- a real, **non-editable** install, despite
-  the task name; re-run it after every `src/` edit or `import script_widget`
+  the task name; re-run it after every `src/` edit or `import sandbox_widget`
   picks up the stale previously-installed copy, not your change).
 - Run tests: `pixi run test` (== `pytest test/`).
 - Run a single test: `pixi run pytest test/test_executor.py::test_exception_is_caught_and_reported`
   (or plain `pytest ...` -- `test/conftest.py` puts `src/` on `sys.path`, so
   this works even without `install-dev`).
-- Try the widget: open a notebook, `import script_widget`, then
+- Try the widget: open a notebook, `import sandbox_widget`, then
   ```
   %%exercise
   import matplotlib.pyplot as plt
@@ -309,7 +340,7 @@ Pixi-managed (config in `pyproject.toml` under `[tool.pixi.*]`; channels
   ```
 - JS syntax check after editing the embedded frontend string:
   ```bash
-  python -c "from script_widget import widget as m; open('/tmp/e.mjs','w').write(m._ESM)"
+  python -c "from sandbox_widget import widget as m; open('/tmp/e.mjs','w').write(m._ESM)"
   node --check /tmp/e.mjs
   ```
   (also `test_frontend.py::test_esm_is_syntactically_valid_js`, run
