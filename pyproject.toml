@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sandbox-widget"
-version = "1.0.3"
+version = "1.0.4"
 description = "Jupyter widget that runs a cell in a fresh, isolated namespace (the %%exercise cell magic)"
 authors = [
     {name = "Kasper Munch", email = "kaspermunch@birc.au.dk"}
