@@ -2,6 +2,7 @@ name: buildenv
 channels:
   - conda-forge
 dependencies:
-  - anaconda
   - conda-build>=25.1.3 # from 25 the output file is a .conda not .tar.bz2
   - anaconda-client
+  - conda-verify
+  - conda-package-handling

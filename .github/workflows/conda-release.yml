@@ -53,15 +53,8 @@ jobs:
 
   conda_deployment_with_new_tag:
 
-    name: Conda deployment of package for platform ${{ matrix.os }} 
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macOS-latest, ubuntu-latest] #, macos-13, windows-latest]
-        # # ==============================================================================
-        # # Uncomment to produce multi-platform builds:
-        # python-version: ["3.10", "3.11", "3.12", "3.13"] 
-        # # ==============================================================================
+    name: Conda deployment of package (noarch)
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
@@ -73,11 +66,6 @@ jobs:
           auto-update-conda: false
           auto-activate-base: false
           show-channel-urls: true
-          # # ==============================================================================
-          # # Uncomment to produce multi-platform builds:
-          # python-version: ${{ matrix.python-version }} 
-          # # ==============================================================================
-
 
       # - name: Install dependencies
       #   run: |
@@ -92,7 +80,7 @@ jobs:
       - name: Install conda-build into base
         shell: bash -l {0}
         run: |
-          conda install -n base -c conda-forge -y conda-build conda-verify anaconda-client nodejs=24
+          conda install -n base -c conda-forge -y conda-build conda-verify anaconda-client
 
       - name: Build and upload the conda packages
         uses: munch-group/action-conda-build-upload@v0.1.26
@@ -101,11 +89,4 @@ jobs:
           user: munch-group
           token: ${{ secrets.ANACONDA_TOKEN }}
           overwrite: true
-          # # ==============================================================================
-          # # Uncomment to produce multi-platform builds:
-          # conda_build_args: -c conda-forge -c munch-group
-          # platform_osx-arm64: true
-          # platform_linux-64: true
-          # platform_osx-64: true
-          # # ==============================================================================
 

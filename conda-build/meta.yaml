@@ -10,9 +10,8 @@ source:
 build:
   number: 0
   script: {{ PYTHON }} -m pip install . -vv
-  python_version_independent: true
-  # entry_points:
-  #  - sandbox-widget = sandbox_widget:sandbox_widget
+  noarch: python
+  # no entry_points -- sandbox-widget has no [project.scripts] console script
 
 requirements:
   host:
