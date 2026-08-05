@@ -39,7 +39,7 @@ sandbox_widget = ["data/*.txt", "data/*.csv", "data/*.pickle", "data/*.h5"]
 
 [tool.pixi.workspace]
 channels = ["conda-forge", "munch-group"]
-platforms = ["osx-arm64",  "linux-64"]
+platforms = ["osx-arm64", "osx-64", "win-64", "linux-64"]
 
 [tool.pixi.dependencies]
 python = ">=3.9,<3.14"
