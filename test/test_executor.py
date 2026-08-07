@@ -105,6 +105,22 @@ def test_syntax_error_is_caught_and_reported():
     assert "SyntaxError" in result.error
 
 
+def test_syntax_error_traceback_looks_like_a_real_cells():
+    # A student typing this into a real notebook cell never sees a raw
+    # "Traceback (most recent call last):" or sandbox_widget's own
+    # _child_main/ast.parse frames -- just IPython's usual caret pointing at
+    # the bad column, the same as a runtime error gets (see
+    # test_traceback_does_not_leak_internal_executor_frames).
+    result = run_exercise('print("hi", 1 / )')
+    assert result.success is False
+    assert "_child_main" not in result.traceback
+    assert "executor.py" not in result.traceback
+    assert "Traceback (most recent call last)" not in result.traceback
+    plain = _strip_ansi(result.traceback)
+    assert 'print("hi", 1 / )' in plain
+    assert "^" in plain
+
+
 def test_each_run_gets_a_fresh_namespace():
     # Nothing a cell defines persists to the next run -- each call is a
     # brand-new subprocess with its own interpreter, not just a fresh dict

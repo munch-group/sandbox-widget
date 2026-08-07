@@ -50,9 +50,9 @@ class ExerciseResult:
     traceback : str or None
         The full formatted traceback for ``error``, else ``None``. Carries
         the same ANSI color codes as a normal uncaught-exception traceback
-        (captured via the subprocess's own ``ip.InteractiveTB``), except
-        for a plain-text ``SyntaxError`` (caught before the subprocess's
-        shell is even set up) or a subprocess that died outright.
+        (a runtime error via the subprocess's own ``ip.InteractiveTB``, a
+        ``SyntaxError`` via its ``ip.SyntaxTB``), except for a subprocess
+        that died outright, which has no shell to format anything with.
     """
 
     __slots__ = ("stdout", "stderr", "outputs", "error", "traceback")
@@ -88,8 +88,8 @@ def _last_line_value(tree, namespace, filename):
       comparable "cell output", so this returns ``None``.
 
     ``filename`` must be a name ``linecache`` can already resolve (see
-    ``ip.compile.cache`` in ``_run_with_ipython``) -- both fragments below
-    keep the *original* line numbers from ``tree`` (slicing ``tree.body``
+    ``ip.compile.cache`` in ``_child_main``) -- both fragments below keep
+    the *original* line numbers from ``tree`` (slicing ``tree.body``
     doesn't renumber anything), so a traceback frame from either one still
     points at the right line of the real cached source.
     """
@@ -167,17 +167,38 @@ def _child_main(source, conn):
     through ``conn`` before this disposable interpreter exits.
     """
     try:
+        # Built and the source registered with linecache *before* parsing
+        # (not only on the success path) so a SyntaxError gets the same
+        # treatment as a runtime error: IPython's own "Cell In[0], line N"
+        # caret display, not a raw stdlib traceback naming _child_main and
+        # ast.parse -- a student typing the same code into a real notebook
+        # cell never sees either of those.
+        ip = _make_headless_shell()
+        filename = ip.compile.cache(source)
         try:
-            tree = ast.parse(source, mode="exec")
+            tree = ast.parse(source, filename=filename, mode="exec")
         except SyntaxError as e:
-            result = ExerciseResult(error=f"SyntaxError: {e.msg}", traceback=traceback.format_exc())
+            result = ExerciseResult(
+                error=f"SyntaxError: {e.msg}",
+                traceback=_format_syntax_error(ip, e),
+            )
         else:
-            ip = _make_headless_shell()
-            result = _run_with_ipython(tree, {}, ip, source)
+            result = _run_with_ipython(tree, {}, ip, filename)
     except BaseException as e:  # pragma: no cover - defensive fallback
         result = ExerciseResult(error=f"{type(e).__name__}: {e}", traceback=traceback.format_exc())
     conn.send(result)
     conn.close()
+
+
+def _format_syntax_error(ip, exc):
+    """Format a SyntaxError the way IPython would for the same cell -- no
+    frame list (there's no call stack to show), just the caret pointing at
+    the offending column, via the shell's own ``SyntaxTB`` (the formatter
+    ``showsyntaxerror`` uses internally, called here directly so the text
+    comes back instead of going straight to stdout).
+    """
+    stb = ip.SyntaxTB.structured_traceback(type(exc), exc, [])
+    return ip.SyntaxTB.stb2text(stb)
 
 
 def _make_headless_shell():
@@ -218,17 +239,9 @@ def _make_headless_shell():
     return shell
 
 
-def _run_with_ipython(tree, namespace, ip, source):
+def _run_with_ipython(tree, namespace, ip, filename):
     from IPython.display import display as ipy_display
     from IPython.utils.capture import capture_output
-
-    # Register the cell's real source with linecache under a name IPython's
-    # own compiler cache hands out (exactly what a real notebook cell does
-    # for itself) -- without this, frames compiled under a synthetic
-    # filename like "<exercise>" have no source line ``structured_traceback``
-    # can look up, so the traceback shows bare "File <exercise>:N" with no
-    # code and nothing to syntax-highlight.
-    filename = ip.compile.cache(source)
 
     error = tb = None
     with capture_output() as cap:
@@ -238,13 +251,22 @@ def _run_with_ipython(tree, namespace, ip, source):
                 ipy_display(value)
         except Exception as e:
             error = f"{type(e).__name__}: {e}"
-            # tb_offset=2 drops exactly this function's own frame and
-            # _last_line_value's -- the two frames of "our" plumbing between
-            # here and the cell's own code -- so what's left matches what
-            # running the same code as a plain script would show: only the
-            # cell's frames (and anything deeper they call into), nothing
-            # from sandbox_widget itself.
-            stb = ip.InteractiveTB.structured_traceback(*sys.exc_info(), tb_offset=2)
+            # Drop this function's own frame and _last_line_value's -- the
+            # two frames of "our" plumbing between here and the cell's own
+            # code -- by walking past them in the traceback chain before
+            # IPython ever sees it, so what's left matches what running the
+            # same code as a plain script would show: only the cell's
+            # frames (and anything deeper they call into), nothing from
+            # sandbox_widget itself. An earlier version passed
+            # ``tb_offset=2`` to ``structured_traceback`` instead, but
+            # ``VerboseTB.get_records`` stopped honouring that parameter;
+            # splicing the traceback object ourselves doesn't depend on
+            # IPython's internals at all.
+            etype, evalue, etb = sys.exc_info()
+            for _ in range(2):
+                if etb is not None:
+                    etb = etb.tb_next
+            stb = ip.InteractiveTB.structured_traceback(etype, evalue, etb)
             tb = ip.InteractiveTB.stb2text(stb)
         finally:
             # Flush any matplotlib figures the cell drew, exactly like a
