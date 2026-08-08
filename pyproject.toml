@@ -60,9 +60,9 @@ nodejs = ">=20,<23"
 ipython = "*"
 # Required by scripts/git-commit.sh: nbdime for semantic notebook diffs
 # (hard-required, script exits if missing), jq for parsing the Anthropic
-# API response used to draft commit messages.
+# API response used to draft commit messages. jq has no conda-forge build for
+# win-64, so it's declared per-target below instead of here.
 nbdime = "*"
-jq = "*"
 anywidget = ">=0.11.0,<0.12"
 # Dev/test only (not a sandbox_widget runtime dependency) -- exercises the
 # %%exercise -> matplotlib figure capture path in test/test_executor.py.
@@ -70,6 +70,15 @@ matplotlib-base = "*"
 
 # [tool.pixi.pypi-dependencies]
 # sandbox-widget = { path = ".", editable = true }
+
+[tool.pixi.target.osx-arm64.dependencies]
+jq = "*"
+
+[tool.pixi.target.osx-64.dependencies]
+jq = "*"
+
+[tool.pixi.target.linux-64.dependencies]
+jq = "*"
 
 [tool.pixi.environments]
 default = {solve-group = "default"}
