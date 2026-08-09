@@ -215,7 +215,7 @@ function render({ model, el }){
 
   const header = document.createElement("div");
   header.className = "sw-header";
-  header.textContent = "Terminal output:";
+  header.textContent = "Terminal";
   root.appendChild(header);
 
   // Everything the cell produced lives in one continuous white panel --
@@ -287,20 +287,26 @@ export default { render };
 _CSS = r"""
 /* Styles for the DOM built in _ESM's render(): a plain gray "mat" (.sw-root,
    bordered on all four edges, no success/failure color change), a small
-   "Terminal output:" label (.sw-header) sitting directly on that gray
-   background, then one continuous white panel (.sw-body) holding
-   everything the cell produced -- combined stdout+stderr (.sw-output), any
-   rendered outputs (.sw-image/.sw-svg/.sw-html/.sw-text), and
-   .sw-traceback -- stacked with plain margin so no gray ever shows between
-   them. margin-top on .sw-root separates the box from the code cell above
-   it. */
+   "Terminal" label (.sw-header) sitting directly on that gray background
+   (spacing is entirely self-owned via its own margin, since .sw-root has no
+   padding of its own -- see below), then one continuous white panel
+   (.sw-body) holding everything the cell produced -- combined stdout+stderr
+   (.sw-output), any rendered outputs (.sw-image/.sw-svg/.sw-html/.sw-text),
+   and .sw-traceback -- stacked with plain margin so no gray ever shows
+   between them. margin-top on .sw-root separates the box from the code cell
+   above it. */
 .sw-root { width: 100%; box-sizing: border-box; margin-top: 8px;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  background: #f3f4f6; border-radius: 6px; padding: 8px;
+  background: #f3f4f6; border-radius: 6px; overflow: hidden;
   border: 1px solid #9ca3af; }
 .sw-header { font-size: 11.5px; font-weight: 600; letter-spacing: .02em;
-  color: #6b7280; text-transform: uppercase; margin: 2px 4px 6px; }
-.sw-body { background: #ffffff; border-radius: 4px; padding: 10px 14px; }
+  color: #6b7280; text-transform: uppercase; margin: 10px 12px 6px; }
+/* Square corners, flush with .sw-root's left/right/bottom edges (.sw-root
+   itself has no padding, so .sw-body's own box edge *is* the outer edge --
+   only .sw-header insets itself via its own margin above). .sw-root's
+   overflow: hidden clips .sw-body's square bottom corners to .sw-root's
+   rounded outline instead of letting them poke past the curve. */
+.sw-body { background: #ffffff; padding: 10px 14px; }
 .sw-body > * + * { margin-top: 8px; }
 .sw-output, .sw-text, .sw-traceback {
   margin: 0;
