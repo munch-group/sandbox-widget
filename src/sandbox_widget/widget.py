@@ -312,7 +312,7 @@ _CSS = r"""
   background: #f3f4f6; border-radius: 6px; overflow: hidden;
   border: 1px solid #9ca3af; }
 .sw-header { font-size: 11.5px; font-weight: 600; letter-spacing: .02em;
-  color: #6b7280; text-transform: uppercase; margin: 10px 12px 6px; }
+  color: #6b7280; text-transform: uppercase; margin: 10px 12px 3px; }
 /* Square corners, flush with .sw-root's left/right/bottom edges (.sw-root
    itself has no padding, so .sw-body's own box edge *is* the outer edge --
    only .sw-header insets itself via its own margin above). .sw-root's
