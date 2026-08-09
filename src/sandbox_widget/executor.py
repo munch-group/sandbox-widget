@@ -104,7 +104,7 @@ def _last_line_value(tree, namespace, filename):
     return None
 
 
-def run_exercise(source):
+def run_exercise(source, display_last_expr=True):
     """Run ``source`` in a fresh, fully isolated **subprocess** and capture
     everything it produced.
 
@@ -133,18 +133,29 @@ def run_exercise(source):
     ----------
     source : str
         The cell body.
+    display_last_expr : bool, optional
+        Whether a trailing bare expression (e.g. a lone variable name) gets
+        its value displayed, the way a real notebook cell would (the
+        default, ``True``). Set to ``False`` for `python script.py`-style
+        semantics instead: the last statement still runs (so any side
+        effect still happens), but an expression's value is discarded
+        rather than shown -- exactly what running the same code with
+        ``python`` would do, since only an interactive shell or a notebook
+        auto-displays a trailing expression at all. Doesn't affect explicit
+        ``display(...)`` calls inside the cell, which are captured either
+        way.
 
     Returns
     -------
     ExerciseResult
     """
-    return _run_isolated(source)
+    return _run_isolated(source, display_last_expr)
 
 
-def _run_isolated(source):
+def _run_isolated(source, display_last_expr):
     ctx = multiprocessing.get_context("spawn")
     parent_conn, child_conn = ctx.Pipe()
-    process = ctx.Process(target=_child_main, args=(source, child_conn))
+    process = ctx.Process(target=_child_main, args=(source, display_last_expr, child_conn))
     process.start()
     child_conn.close()
     try:
@@ -161,7 +172,7 @@ def _run_isolated(source):
     return result
 
 
-def _child_main(source, conn):
+def _child_main(source, display_last_expr, conn):
     """Entry point run inside the spawned subprocess: parse, execute, and
     capture ``source``, then send the resulting ``ExerciseResult`` back
     through ``conn`` before this disposable interpreter exits.
@@ -183,7 +194,7 @@ def _child_main(source, conn):
                 traceback=_format_syntax_error(ip, e),
             )
         else:
-            result = _run_with_ipython(tree, {}, ip, filename)
+            result = _run_with_ipython(tree, {}, ip, filename, display_last_expr)
     except BaseException as e:  # pragma: no cover - defensive fallback
         result = ExerciseResult(error=f"{type(e).__name__}: {e}", traceback=traceback.format_exc())
     conn.send(result)
@@ -239,15 +250,19 @@ def _make_headless_shell():
     return shell
 
 
-def _run_with_ipython(tree, namespace, ip, filename):
+def _run_with_ipython(tree, namespace, ip, filename, display_last_expr):
     from IPython.display import display as ipy_display
     from IPython.utils.capture import capture_output
 
     error = tb = None
     with capture_output() as cap:
         try:
+            # _last_line_value always *runs* the last statement (so a side
+            # effect from e.g. a bare function call still happens either
+            # way) -- display_last_expr only gates whether its value, if
+            # it's a bare expression, also gets displayed.
             value = _last_line_value(tree, namespace, filename)
-            if value is not None:
+            if display_last_expr and value is not None:
                 ipy_display(value)
         except Exception as e:
             error = f"{type(e).__name__}: {e}"

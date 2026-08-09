@@ -179,3 +179,33 @@ def test_figure_is_flushed_even_if_the_cell_raises_after_drawing():
     assert result.success is False
     assert "ValueError" in result.error
     assert any("image/png" in o for o in result.outputs)
+
+
+def test_display_last_expr_false_suppresses_a_bare_trailing_expression():
+    # %%python-style semantics: same as plain `python script.py`, where a
+    # lone variable name on the last line produces no output at all.
+    result = run_exercise("a = 10\na", display_last_expr=False)
+    assert result.success is True
+    assert result.outputs == []
+
+
+def test_display_last_expr_false_still_executes_the_final_statement():
+    # Suppressing the *display* doesn't skip running the statement -- a
+    # side effect from a bare trailing call still happens either way.
+    result = run_exercise(
+        "def f():\n    print('side effect')\n    return 42\nf()\n",
+        display_last_expr=False,
+    )
+    assert result.success is True
+    assert result.stdout == "side effect\n"
+    assert result.outputs == []
+
+
+def test_display_last_expr_false_does_not_affect_explicit_display_calls():
+    result = run_exercise(
+        "from IPython.display import display\n"
+        "display({'text/plain': 'explicit'}, raw=True)\n"
+        "1 + 1\n",
+        display_last_expr=False,
+    )
+    assert result.outputs == [{"text/plain": "explicit"}]

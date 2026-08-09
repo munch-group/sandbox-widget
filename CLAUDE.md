@@ -20,7 +20,11 @@ object, so a mutation like `plt.rcParams['lines.linewidth'] = 5` inside the
 cell can never leak back out. Everything the cell produced -- stdout,
 stderr, rich display output, any exception -- is shown in a shaded
 `ExerciseOutputWidget` box below the cell instead of the notebook's normal
-(unstyled) output area.
+(unstyled) output area. `%%sandbox` is the one exception to the boxed
+display: it runs with the same isolation as `%%exercise` but renders
+plainly, the way an ordinary unstyled cell would -- see the `widget.py`
+bullet under "Package layout" for the full breakdown of how `%%sandbox`/
+`%%python` each differ from `%%exercise`.
 
 The repo was scaffolded from the `munch-group` Python-library template
 (pixi environment, quartodoc docs, conda/PyPI release automation) -- the
@@ -33,9 +37,12 @@ logic is split out into its own `executor.py` for the same reason
 
 Note: the identifiers now diverge **three** ways, each deliberate:
 
-- The **magic name** is `%%exercise` (canonical), with a `%%sandbox` alias
-  -- not `%%script`, specifically to avoid clashing with IPython's own
-  built-in `%%script` cell magic (see "Package layout" below).
+- The **magic name** is `%%exercise` (canonical), with `%%sandbox`/
+  `%%python` variants -- `%%sandbox` named that (not `%%script`)
+  specifically to avoid clashing with IPython's own built-in `%%script`
+  cell magic; `%%python` deliberately overrides IPython's own built-in
+  `%%python` instead (see "Package layout" below for how each variant's
+  behavior actually differs from `%%exercise`).
 - The **importable module / PyPI-conda package name** is
   `sandbox_widget`/`sandbox-widget` (renamed from `script_widget`/
   `script-widget`).
@@ -79,33 +86,52 @@ The package is `sandbox_widget` under `src/`:
 - `src/sandbox_widget/widget.py` -- `ExerciseOutputWidget` (the
   `anywidget.AnyWidget`) + the embedded `_ESM`/`_CSS` frontend strings +
   `register_exercise_magic()`, which registers `%%exercise` (the canonical
-  name), `%%sandbox`, and `%%python` as cell magics -- all three are the
-  same handler function registered under a different `magic_name`, not
-  separate implementations. `%%sandbox` and `%%python` are chosen for
-  opposite reasons: `%%sandbox` deliberately *avoids* clashing with
-  IPython's own built-in `%%script` cell magic (which shells out to an
-  external interpreter, e.g. `%%script bash`) -- an earlier version
-  registered the alias as `%%script` and silently shadowed the built-in for
-  the rest of the kernel session, and a cell using `%%script` before
-  `sandbox_widget` had been imported hit the *built-in's* own confusing
-  failure (missing interpreter argument) rather than a clear "magic not
-  found" error. `%%python`, by contrast, deliberately *overrides* one of
-  IPython's own built-ins: `ScriptMagics` auto-registers `%%python` (and
-  `%%python2`/`%%python3`/`%%pypy`/`%%sh`/`%%bash`/`%%perl`/`%%ruby`)
-  unconditionally as `%%script <name>` shortcuts, regardless of whether
-  that interpreter is even on `PATH` -- importing `sandbox_widget`
-  intentionally replaces `%%python` for the rest of the kernel session so
-  it runs in the same isolated subprocess as `%%exercise` rather than
-  shelling out to a system `python`. `register_exercise_magic()` also
-  registers `%sandbox <filename>` and `%python <filename>` as line magics
-  (single `%`) -- a second handler, `exercise_file`, that reads the named
-  file's source instead of using a cell body and otherwise runs the exact
-  same `run_exercise` -> `ExerciseOutputWidget` pipeline. A missing
-  filename or an unreadable/undecodable file raises
-  `IPython.core.error.UsageError` (IPython's own clean one-line usage
-  error, same convention `%run` uses for its own "no such file" case)
-  rather than being routed through the shaded box -- only errors from code
-  that actually ran go through `ExerciseResult`/the widget. The widget's
+  name), `%%sandbox`, and `%%python` as cell magics, plus `%sandbox`/
+  `%python` as their file-reading line-magic counterparts. All five run a
+  cell/file through `executor.run_exercise` in an isolated subprocess, but
+  **`%%sandbox`/`%%python` are no longer plain aliases of `%%exercise`** --
+  each name is its own small handler combining two independent choices:
+  - *Trailing-expression display* -- `run_exercise`'s `display_last_expr`
+    flag. `%%exercise`/`%%sandbox` default it `True` (a bare expression on
+    the last line displays, like a real notebook cell); `%%python` passes
+    `False` (script-style: the statement still runs, but its value is
+    discarded, like plain `python script.py` would do -- a lone variable
+    name on the last line produces no output).
+  - *Rendering* -- `%%exercise`/`%%python` wrap the result in the shaded
+    `ExerciseOutputWidget` box (`_display_boxed`); `%%sandbox` renders it
+    the plain, unstyled way any other cell's output would show --
+    `_display_plain` writes `stdout`/`stderr` straight to the real streams,
+    publishes each captured rich-display MIME bundle via
+    `IPython.display.publish_display_data`, and writes a failure's raw
+    traceback to stderr -- no widget, no box, no "Terminal" header. Since
+    that text still carries the same ANSI SGR codes the boxed path colors
+    itself (via `_ESM`'s own `ansiToHtml`), Jupyter's normal stream-output
+    ANSI handling colors it the same way any other cell's colored output
+    would be.
+  `%%sandbox` and `%%python` are still chosen for the same two opposite
+  reasons regarding IPython's own built-ins as before: `%%sandbox`
+  deliberately *avoids* clashing with IPython's own built-in `%%script`
+  cell magic (which shells out to an external interpreter, e.g. `%%script
+  bash`) -- an earlier version registered the alias as `%%script` and
+  silently shadowed the built-in for the rest of the kernel session, and a
+  cell using `%%script` before `sandbox_widget` had been imported hit the
+  *built-in's* own confusing failure (missing interpreter argument) rather
+  than a clear "magic not found" error. `%%python`, by contrast,
+  deliberately *overrides* one of IPython's own built-ins: `ScriptMagics`
+  auto-registers `%%python` (and `%%python2`/`%%python3`/`%%pypy`/`%%sh`/
+  `%%bash`/`%%perl`/`%%ruby`) unconditionally as `%%script <name>`
+  shortcuts, regardless of whether that interpreter is even on `PATH` --
+  importing `sandbox_widget` intentionally replaces `%%python` for the
+  rest of the kernel session so it runs in the same isolated subprocess as
+  `%%exercise` rather than shelling out to a system `python`. `%sandbox
+  <filename>`/`%python <filename>` share a `_read_source_file` helper for
+  the file-reading part, then apply the exact same (display-flag,
+  rendering) pair as their `%%`-prefixed namesake. A missing filename or an
+  unreadable/undecodable file raises `IPython.core.error.UsageError`
+  (IPython's own clean one-line usage error, same convention `%run` uses
+  for its own "no such file" case) rather than being routed through
+  whichever rendering path the magic would otherwise use -- only errors
+  from code that actually ran go through `ExerciseResult`. The widget's
   traits are copied from an
   `ExerciseResult` once at construction and never change afterward (unlike
   `puzzle_widget.PuzzleWidget`, there's no interactive re-checking), so the
@@ -321,9 +347,19 @@ text node.
   `text/plain` repr of the `Figure` object, not a missing output.
 - **The package/magic name mismatch is intentional, not a leftover.** The
   package is `sandbox_widget`; the magic is `%%exercise` (with `%%sandbox`/
-  `%%python` cell-magic aliases and `%sandbox`/`%python` file-reading
+  `%%python` cell-magic variants and `%sandbox`/`%python` file-reading
   line-magic counterparts). Don't "fix" this by renaming the package to
   match the magic name -- see the note in "What this is" above.
+- **`%%sandbox`/`%%python` are *not* plain aliases of `%%exercise` --
+  don't reintroduce that assumption.** It was true once (an earlier
+  version registered all three names against the exact same handler
+  function), but each now differs from `%%exercise` along one axis: a
+  lone variable name on the last line of a `%%python` cell produces no
+  output (script-style, unlike `%%exercise`/`%%sandbox`'s notebook-style
+  auto-display of a trailing expression), and `%%sandbox`'s output isn't
+  wrapped in the `ExerciseOutputWidget` box at all -- it prints/publishes
+  plainly, like any other unstyled cell. See the `widget.py` bullet above
+  for the full (display-flag, rendering) breakdown per name.
 - **`%%python` intentionally shadows IPython's built-in `%%script`-shortcut
   magic of the same name for the rest of the kernel session, once
   `sandbox_widget` is imported.** Unlike `%%sandbox` (chosen specifically

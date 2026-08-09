@@ -10,10 +10,10 @@ instead of the notebook's normal (unstyled) output area.
   behaves the same across VS Code notebooks, JupyterLab, Notebook 7 and
   Colab.
 * All execution/capture logic lives in ``executor.py``; this module only
-  wraps the result in a synced-traitlets widget and wires up the
-  ``%%exercise`` cell magic (``%%sandbox`` and ``%%python`` are aliases for
-  the same magic; ``%sandbox``/``%python`` are file-reading line-magic
-  counterparts -- see ``register_exercise_magic``).
+  wraps the result in a synced-traitlets widget and wires up the cell
+  magics (``%%exercise``, ``%%sandbox``, ``%%python``) and line magics
+  (``%sandbox``, ``%python``) -- see ``register_exercise_magic`` for how
+  each one differs.
 
 Usage
 -----
@@ -38,12 +38,16 @@ try:  # IPython is present whenever a kernel is running, but guard anyway.
     from IPython import get_ipython
     from IPython.core.error import UsageError
     from IPython.display import display as _ipy_display
+    from IPython.display import publish_display_data
     from IPython.utils.process import arg_split
 except Exception:  # pragma: no cover
     def get_ipython():
         return None
 
     def _ipy_display(*a, **k):
+        pass
+
+    def publish_display_data(*a, **k):
         pass
 
     class UsageError(Exception):
@@ -433,22 +437,78 @@ class ExerciseOutputWidget(anywidget.AnyWidget):
         self.layout.width = "100%"
 
 
+def _display_boxed(result):
+    """Show an ``ExerciseResult`` the `%%exercise` way: everything wrapped
+    in a shaded ``ExerciseOutputWidget`` box below the cell.
+    """
+    _ipy_display(ExerciseOutputWidget(result))
+
+
+def _display_plain(result):
+    """Show an ``ExerciseResult`` the way an ordinary, unstyled notebook
+    cell would -- no widget box at all, just the real stdout/stderr
+    streams, each captured rich-display MIME bundle published as its own
+    normal display output, and (on failure) the raw traceback text written
+    to stderr. Jupyter's frontend ANSI-colors a stream's text the same way
+    for any other cell, so a colored traceback still renders in color here
+    even though it's going out as plain text rather than through the
+    widget's own ``ansiToHtml`` converter.
+    """
+    if result.stdout:
+        sys.stdout.write(result.stdout)
+    if result.stderr:
+        sys.stderr.write(result.stderr)
+    for bundle in result.outputs:
+        publish_display_data(data=bundle)
+    if result.traceback:
+        sys.stderr.write(result.traceback)
+
+
+def _read_source_file(line):
+    """Resolve a line-magic argument to a filename and return its source
+    text, or raise `UsageError` for a missing/bad filename -- shared by
+    both `%sandbox`/`%python`, which differ only in what they do with the
+    result afterward.
+    """
+    argv = arg_split(line or "", posix=not sys.platform.startswith("win"))
+    if not argv:
+        raise UsageError(
+            "%sandbox/%python: needs a filename, e.g. '%sandbox path/to/script.py'"
+        )
+    path = Path(argv[0]).expanduser()
+    try:
+        return path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        raise UsageError(f"%sandbox/%python: couldn't read {path}: {exc}") from exc
+
+
 def register_exercise_magic(ipython=None):
-    r"""Register the `%%exercise` cell magic and its aliases.
+    r"""Register the `%%exercise`/`%%sandbox`/`%%python` cell magics and the
+    `%sandbox`/`%python` line magics.
 
-    In IPython/Jupyter, `%%exercise` runs the cell body in a fresh
-    subprocess (see ``executor.run_exercise``) and displays everything it
-    produced -- stdout, stderr, rich output, any exception -- in a shaded
-    ``ExerciseOutputWidget`` below the cell::
+    All five run a cell body (or, for the line magics, a file's contents)
+    in a fresh, isolated subprocess via ``executor.run_exercise`` -- but
+    they differ along two independent axes, mixed and matched per name:
 
-        %%exercise
-        import matplotlib.pyplot as plt
-        plt.plot([1, 2, 3])
+    - **Trailing-expression display** -- whether a bare expression on the
+      last line (e.g. a lone variable name) has its value displayed, the
+      way a real notebook cell would (``%%exercise``/`%%sandbox`), or is
+      silently discarded like running the same code with plain ``python``
+      would (``%%python``) -- see ``run_exercise``'s ``display_last_expr``.
+    - **Rendering** -- everything shown inside a shaded `ExerciseOutputWidget`
+      box (``%%exercise``/`%%python`), or shown the plain, unstyled way any
+      other cell's output would be -- real stdout/stderr streams, published
+      display data, a raw traceback on stderr, no box at all
+      (``%%sandbox``).
 
-    `%%sandbox` and `%%python` run the exact same handler under two more
-    names -- all three are registered from the same function, so there's no
-    separate implementation to keep in sync. But they're chosen for
-    opposite reasons:
+    ::
+
+        %%exercise                  # notebook-style display, boxed
+        %%sandbox                   # notebook-style display, plain/unstyled
+        %%python                    # script-style (no bare-expr display), boxed
+
+    `%%exercise` is the canonical name; `%%sandbox`/`%%python` are chosen
+    for opposite reasons regarding IPython's own built-in magics:
 
     - `%%sandbox` deliberately *avoids* IPython's own built-in `%%script`
       cell magic (which runs a cell through an external script interpreter,
@@ -472,8 +532,9 @@ def register_exercise_magic(ipython=None):
       imported -- an accepted, intentional tradeoff.
 
     `%sandbox <filename>` and `%python <filename>` (line magics -- a single
-    `%`, not `%%`) run the exact same pipeline against a *file's* contents
-    instead of a cell body::
+    `%`, not `%%`) are the file-reading counterparts of their `%%`-prefixed
+    namesake -- same (trailing-expression display, rendering) combination,
+    just sourced from a file instead of a cell body::
 
         %sandbox path/to/script.py
 
@@ -481,10 +542,10 @@ def register_exercise_magic(ipython=None):
     directory, a permission error, non-UTF-8 content), raises
     `IPython.core.error.UsageError` -- a clean one-line usage error IPython
     displays directly, the same way `%run` reports its own "no such file"
-    case -- rather than being routed through `ExerciseResult`/the shaded
-    box. Once the file is read successfully, everything downstream
-    (subprocess isolation, error/traceback capture, the widget box) is
-    identical to `%%exercise`.
+    case -- rather than being routed through `ExerciseResult`/whichever
+    rendering the magic would otherwise use. Once the file is read
+    successfully, everything downstream is identical to the equivalent
+    cell magic.
 
     Nothing the cell (or file) defines, imports, or mutates persists past
     that one run, and nothing the notebook has already defined or imported
@@ -499,28 +560,25 @@ def register_exercise_magic(ipython=None):
         return False
 
     def exercise(line, cell):
-        result = run_exercise(cell or "")
-        _ipy_display(ExerciseOutputWidget(result))
+        _display_boxed(run_exercise(cell or ""))
 
-    def exercise_file(line):
-        argv = arg_split(line or "", posix=not sys.platform.startswith("win"))
-        if not argv:
-            raise UsageError(
-                "%sandbox/%python: needs a filename, e.g. '%sandbox path/to/script.py'"
-            )
-        path = Path(argv[0]).expanduser()
-        try:
-            source = path.read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError) as exc:
-            raise UsageError(f"%sandbox/%python: couldn't read {path}: {exc}") from exc
-        result = run_exercise(source)
-        _ipy_display(ExerciseOutputWidget(result))
+    def sandbox(line, cell):
+        _display_plain(run_exercise(cell or ""))
+
+    def python_cell(line, cell):
+        _display_boxed(run_exercise(cell or "", display_last_expr=False))
+
+    def sandbox_file(line):
+        _display_plain(run_exercise(_read_source_file(line)))
+
+    def python_file(line):
+        _display_boxed(run_exercise(_read_source_file(line), display_last_expr=False))
 
     ip.register_magic_function(exercise, magic_kind="cell", magic_name="exercise")
-    ip.register_magic_function(exercise, magic_kind="cell", magic_name="sandbox")
-    ip.register_magic_function(exercise, magic_kind="cell", magic_name="python")
-    ip.register_magic_function(exercise_file, magic_kind="line", magic_name="sandbox")
-    ip.register_magic_function(exercise_file, magic_kind="line", magic_name="python")
+    ip.register_magic_function(sandbox, magic_kind="cell", magic_name="sandbox")
+    ip.register_magic_function(python_cell, magic_kind="cell", magic_name="python")
+    ip.register_magic_function(sandbox_file, magic_kind="line", magic_name="sandbox")
+    ip.register_magic_function(python_file, magic_kind="line", magic_name="python")
     return True
 
 
