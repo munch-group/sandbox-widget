@@ -11,12 +11,13 @@ instead of the notebook's normal (unstyled) output area.
   Colab.
 * All execution/capture logic lives in ``executor.py``; this module only
   wraps the result in a synced-traitlets widget and wires up the
-  ``%%exercise`` cell magic (``%%sandbox`` is a plain alias for the same
-  magic -- see ``register_exercise_magic``).
+  ``%%exercise`` cell magic (``%%sandbox`` and ``%%python`` are aliases for
+  the same magic; ``%sandbox``/``%python`` are file-reading line-magic
+  counterparts -- see ``register_exercise_magic``).
 
 Usage
 -----
-    import sandbox_widget  # registers the %%exercise cell magic (and %%sandbox)
+    import sandbox_widget  # registers %%exercise/%%sandbox/%%python + %sandbox/%python
 
     %%exercise
     import matplotlib.pyplot as plt
@@ -25,6 +26,9 @@ Usage
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 import anywidget
 import traitlets
 
@@ -32,13 +36,21 @@ from .executor import run_exercise
 
 try:  # IPython is present whenever a kernel is running, but guard anyway.
     from IPython import get_ipython
+    from IPython.core.error import UsageError
     from IPython.display import display as _ipy_display
+    from IPython.utils.process import arg_split
 except Exception:  # pragma: no cover
     def get_ipython():
         return None
 
     def _ipy_display(*a, **k):
         pass
+
+    class UsageError(Exception):
+        pass
+
+    def arg_split(*a, **k):
+        return []
 
 
 __all__ = ["ExerciseOutputWidget", "register_exercise_magic"]
@@ -404,7 +416,7 @@ class ExerciseOutputWidget(anywidget.AnyWidget):
 
 
 def register_exercise_magic(ipython=None):
-    r"""Register the `%%exercise` cell magic (and its `%%sandbox` alias).
+    r"""Register the `%%exercise` cell magic and its aliases.
 
     In IPython/Jupyter, `%%exercise` runs the cell body in a fresh
     subprocess (see ``executor.run_exercise``) and displays everything it
@@ -415,23 +427,51 @@ def register_exercise_magic(ipython=None):
         import matplotlib.pyplot as plt
         plt.plot([1, 2, 3])
 
-    `%%sandbox` runs the exact same handler under a second name -- both are
-    registered from the same function, so there's no separate
-    implementation to keep in sync. It's named `%%sandbox` rather than
-    `%%script` specifically to avoid clashing with IPython's own built-in
-    `%%script` cell magic (which runs a cell through an external script
-    interpreter, e.g. `%%script bash`) -- an earlier version of this
-    package registered under that name and silently replaced the built-in
-    for the rest of the kernel session, breaking any cell relying on its
-    real behavior. It also means a cell that uses `%%sandbox` before
-    `import sandbox_widget` has run gets a clear "magic not found" error
-    instead of quietly falling through to the built-in `%%script` and
-    failing there in a confusing, unrelated way.
+    `%%sandbox` and `%%python` run the exact same handler under two more
+    names -- all three are registered from the same function, so there's no
+    separate implementation to keep in sync. But they're chosen for
+    opposite reasons:
 
-    Nothing the cell defines, imports, or mutates persists past that one
-    run, and nothing the notebook has already defined or imported is
-    visible to it at all -- not even via a ``sys.modules`` cache hit, since
-    the cell runs in its own interpreter process.
+    - `%%sandbox` deliberately *avoids* IPython's own built-in `%%script`
+      cell magic (which runs a cell through an external script interpreter,
+      e.g. `%%script bash`) -- an earlier version of this package
+      registered under that name and silently replaced the built-in for
+      the rest of the kernel session, breaking any cell relying on its real
+      behavior. It also means a cell that uses `%%sandbox` before `import
+      sandbox_widget` has run gets a clear "magic not found" error instead
+      of quietly falling through to the built-in `%%script` and failing
+      there in a confusing, unrelated way.
+    - `%%python` deliberately *overrides* one of IPython's built-in
+      `%%script`-shortcut magics: `ScriptMagics` auto-registers `%%python`
+      (along with `%%python2`/`%%python3`/`%%pypy`/`%%sh`/`%%bash`/`%%perl`/
+      `%%ruby`) unconditionally, regardless of whether that interpreter is
+      even on `PATH`, as a shorthand for `%%script python`. Importing
+      `sandbox_widget` intentionally replaces that built-in for the rest of
+      the kernel session, so `%%python` runs in the same isolated
+      subprocess as `%%exercise` instead of shelling out to a system
+      `python`. Any notebook actually relying on the built-in behavior
+      (e.g. `%%script`-style `--` flags) breaks once `sandbox_widget` is
+      imported -- an accepted, intentional tradeoff.
+
+    `%sandbox <filename>` and `%python <filename>` (line magics -- a single
+    `%`, not `%%`) run the exact same pipeline against a *file's* contents
+    instead of a cell body::
+
+        %sandbox path/to/script.py
+
+    A missing filename, or a file that can't be read (not found, a
+    directory, a permission error, non-UTF-8 content), raises
+    `IPython.core.error.UsageError` -- a clean one-line usage error IPython
+    displays directly, the same way `%run` reports its own "no such file"
+    case -- rather than being routed through `ExerciseResult`/the shaded
+    box. Once the file is read successfully, everything downstream
+    (subprocess isolation, error/traceback capture, the widget box) is
+    identical to `%%exercise`.
+
+    Nothing the cell (or file) defines, imports, or mutates persists past
+    that one run, and nothing the notebook has already defined or imported
+    is visible to it at all -- not even via a ``sys.modules`` cache hit,
+    since the code runs in its own interpreter process.
 
     Called automatically on import; returns True when a live shell is
     found, False otherwise (e.g. plain Python).
@@ -444,8 +484,25 @@ def register_exercise_magic(ipython=None):
         result = run_exercise(cell or "")
         _ipy_display(ExerciseOutputWidget(result))
 
+    def exercise_file(line):
+        argv = arg_split(line or "", posix=not sys.platform.startswith("win"))
+        if not argv:
+            raise UsageError(
+                "%sandbox/%python: needs a filename, e.g. '%sandbox path/to/script.py'"
+            )
+        path = Path(argv[0]).expanduser()
+        try:
+            source = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            raise UsageError(f"%sandbox/%python: couldn't read {path}: {exc}") from exc
+        result = run_exercise(source)
+        _ipy_display(ExerciseOutputWidget(result))
+
     ip.register_magic_function(exercise, magic_kind="cell", magic_name="exercise")
     ip.register_magic_function(exercise, magic_kind="cell", magic_name="sandbox")
+    ip.register_magic_function(exercise, magic_kind="cell", magic_name="python")
+    ip.register_magic_function(exercise_file, magic_kind="line", magic_name="sandbox")
+    ip.register_magic_function(exercise_file, magic_kind="line", magic_name="python")
     return True
 
 

@@ -78,17 +78,35 @@ The package is `sandbox_widget` under `src/`:
   child's exit code).
 - `src/sandbox_widget/widget.py` -- `ExerciseOutputWidget` (the
   `anywidget.AnyWidget`) + the embedded `_ESM`/`_CSS` frontend strings +
-  `register_exercise_magic()`, which registers both `%%exercise` (the
-  canonical name) and `%%sandbox` (a plain alias -- same handler function
-  registered under a second `magic_name`, not a separate implementation).
-  It's `%%sandbox`, not `%%script`, specifically to avoid clashing with
+  `register_exercise_magic()`, which registers `%%exercise` (the canonical
+  name), `%%sandbox`, and `%%python` as cell magics -- all three are the
+  same handler function registered under a different `magic_name`, not
+  separate implementations. `%%sandbox` and `%%python` are chosen for
+  opposite reasons: `%%sandbox` deliberately *avoids* clashing with
   IPython's own built-in `%%script` cell magic (which shells out to an
   external interpreter, e.g. `%%script bash`) -- an earlier version
   registered the alias as `%%script` and silently shadowed the built-in for
   the rest of the kernel session, and a cell using `%%script` before
   `sandbox_widget` had been imported hit the *built-in's* own confusing
   failure (missing interpreter argument) rather than a clear "magic not
-  found" error. The widget's traits are copied from an
+  found" error. `%%python`, by contrast, deliberately *overrides* one of
+  IPython's own built-ins: `ScriptMagics` auto-registers `%%python` (and
+  `%%python2`/`%%python3`/`%%pypy`/`%%sh`/`%%bash`/`%%perl`/`%%ruby`)
+  unconditionally as `%%script <name>` shortcuts, regardless of whether
+  that interpreter is even on `PATH` -- importing `sandbox_widget`
+  intentionally replaces `%%python` for the rest of the kernel session so
+  it runs in the same isolated subprocess as `%%exercise` rather than
+  shelling out to a system `python`. `register_exercise_magic()` also
+  registers `%sandbox <filename>` and `%python <filename>` as line magics
+  (single `%`) -- a second handler, `exercise_file`, that reads the named
+  file's source instead of using a cell body and otherwise runs the exact
+  same `run_exercise` -> `ExerciseOutputWidget` pipeline. A missing
+  filename or an unreadable/undecodable file raises
+  `IPython.core.error.UsageError` (IPython's own clean one-line usage
+  error, same convention `%run` uses for its own "no such file" case)
+  rather than being routed through the shaded box -- only errors from code
+  that actually ran go through `ExerciseResult`/the widget. The widget's
+  traits are copied from an
   `ExerciseResult` once at construction and never change afterward (unlike
   `puzzle_widget.PuzzleWidget`, there's no interactive re-checking), so the
   frontend's `render()` draws once from the model's initial state with no
@@ -302,9 +320,18 @@ text node.
   function gets refactored) and figure capture silently degrades to a
   `text/plain` repr of the `Figure` object, not a missing output.
 - **The package/magic name mismatch is intentional, not a leftover.** The
-  package is `sandbox_widget`; the magic is `%%exercise` (with a
-  `%%sandbox` alias). Don't "fix" this by renaming the package to match
-  the magic name -- see the note in "What this is" above.
+  package is `sandbox_widget`; the magic is `%%exercise` (with `%%sandbox`/
+  `%%python` cell-magic aliases and `%sandbox`/`%python` file-reading
+  line-magic counterparts). Don't "fix" this by renaming the package to
+  match the magic name -- see the note in "What this is" above.
+- **`%%python` intentionally shadows IPython's built-in `%%script`-shortcut
+  magic of the same name for the rest of the kernel session, once
+  `sandbox_widget` is imported.** Unlike `%%sandbox` (chosen specifically
+  to *avoid* colliding with a built-in, `%%script`), `%%python` is a
+  deliberate override -- see the `widget.py` bullet above. A notebook that
+  actually relies on the built-in (e.g. `%%script`-style `--` flags, or
+  shelling out to a specific `python` on `PATH`) breaks once
+  `sandbox_widget` is imported; this is expected, not a bug to fix.
 - **The repo/folder name (`script-widget`) no longer matches the package
   name (`sandbox-widget`), and that's also intentional.** The package was
   renamed from `script_widget`/`script-widget` to `sandbox_widget`/
