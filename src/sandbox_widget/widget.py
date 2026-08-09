@@ -210,15 +210,25 @@ function renderOutput(data){
  */
 function render({ model, el }){
   // Both classic ipywidgets and JupyterLab wrap a widget's view in one or
-  // more shrink-to-fit containers by default, so the box only ends up as
-  // wide as its own content instead of the output area (which lines up
-  // with the input cell above it). Force every ancestor in that wrapper
-  // chain to fill its parent -- inline styles win regardless of exactly
-  // what those wrapper elements are called in a given frontend.
+  // more shrink-to-fit flex containers by default -- that's *why* they're
+  // flex in the first place, so a row of widgets can size to content. Two
+  // separate consequences follow from that, one per flex axis: on the
+  // main axis the box only ends up as wide as its own content instead of
+  // the output area (which lines up with the input cell above it); on the
+  // cross axis, flex's default `align-items: stretch` stretches each
+  // wrapper to the height of whatever else shares its flex line, taller
+  // than our own content needs -- and since `.sw-root`'s gray background
+  // fills its full (now-inflated) box, that surplus shows up as dead gray
+  // space below the white body, not as a margin/padding value anywhere in
+  // this stylesheet. Force every ancestor in that wrapper chain to fill
+  // its parent's width *and* to stop stretching to its neighbors' height --
+  // inline styles win regardless of exactly what those wrapper elements
+  // are called in a given frontend.
   let ancestor = el;
   for (let i = 0; i < 4 && ancestor; i++){
     ancestor.style.width = "100%";
     ancestor.style.boxSizing = "border-box";
+    ancestor.style.alignSelf = "flex-start";
     ancestor = ancestor.parentElement;
   }
 
@@ -310,7 +320,15 @@ _CSS = r"""
 .sw-root { width: 100%; box-sizing: border-box; margin-top: 8px;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   background: #f3f4f6; border-radius: 6px; overflow: hidden;
-  border: 1px solid #9ca3af; }
+  border: 1px solid #9ca3af;
+  /* Its own containing element (`el`, the anywidget view root) is one of
+     the flex wrappers render()'s ancestor loop patches from JS -- this is
+     the CSS-side twin of that fix, covering the case where `el` itself is
+     the flex container `.sw-root` sits in: without it, flex's default
+     `align-items: stretch` would stretch `.sw-root` to `el`'s height
+     rather than its own content's, and the gray background would fill
+     that extra height as dead space below the white body. */
+  align-self: flex-start; }
 .sw-header { font-size: 11.5px; font-weight: 600; letter-spacing: .02em;
   color: #6b7280; text-transform: uppercase; margin: 10px 12px 3px; }
 /* Square corners, flush with .sw-root's left/right/bottom edges (.sw-root
