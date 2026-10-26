@@ -82,7 +82,11 @@ The package is `sandbox_widget` under `src/`:
   with `.traceback` from `ip.InteractiveTB.structured_traceback()`/
   `.stb2text()` -- see "Colored tracebacks" under Architecture), or the
   subprocess dying outright (reported as a generic `.error` with the
-  child's exit code).
+  child's exit code). An optional `cwd` makes the child `os.chdir` there
+  first; every magic passes `widget._notebook_dir(ip)` -- the notebook's
+  folder, from VS Code's `__vsc_ipynb_file__` or Jupyter Server's
+  `JPY_SESSION_NAME` (only if it names an existing absolute file), else
+  `None`, i.e. inherit the kernel's current cwd.
 - `src/sandbox_widget/widget.py` -- `ExerciseOutputWidget` (the
   `anywidget.AnyWidget`) + the embedded `_ESM`/`_CSS` frontend strings +
   `register_exercise_magic()`, which registers `%%exercise` (the canonical

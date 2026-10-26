@@ -109,7 +109,7 @@ def _fake_run_exercise(result, calls=None):
     result.
     """
 
-    def fake(source, display_last_expr=True):
+    def fake(source, display_last_expr=True, cwd=None):
         if calls is not None:
             calls.append((source, display_last_expr))
         return result
@@ -265,3 +265,47 @@ def test_python_line_magic_also_raises_usage_error_on_missing_file(tmp_path, mon
     register_exercise_magic(ipython=shell)
     with pytest.raises(UsageError):
         shell.magics_manager.magics["line"]["python"](str(tmp_path / "does_not_exist.py"))
+
+
+def test_notebook_dir_prefers_vscode_notebook_path(tmp_path, monkeypatch):
+    nb = tmp_path / "vsc" / "nb.ipynb"
+    nb.parent.mkdir()
+    nb.write_text("{}")
+    other = tmp_path / "other.ipynb"
+    other.write_text("{}")
+    monkeypatch.setenv("JPY_SESSION_NAME", str(other))
+    shell = types.SimpleNamespace(user_ns={"__vsc_ipynb_file__": str(nb)})
+    assert widget_module._notebook_dir(shell) == str(nb.parent)
+
+
+def test_notebook_dir_falls_back_to_jpy_session_name(tmp_path, monkeypatch):
+    nb = tmp_path / "nb.ipynb"
+    nb.write_text("{}")
+    monkeypatch.setenv("JPY_SESSION_NAME", str(nb))
+    assert widget_module._notebook_dir(types.SimpleNamespace(user_ns={})) == str(tmp_path)
+
+
+@pytest.mark.parametrize("session_name", [None, "console-1234", "relative/nb.ipynb", "/no/such/nb.ipynb"])
+def test_notebook_dir_is_none_without_a_real_notebook_path(session_name, monkeypatch):
+    if session_name is None:
+        monkeypatch.delenv("JPY_SESSION_NAME", raising=False)
+    else:
+        monkeypatch.setenv("JPY_SESSION_NAME", session_name)
+    assert widget_module._notebook_dir(types.SimpleNamespace(user_ns={})) is None
+
+
+def test_sandbox_cell_magic_runs_in_the_notebook_dir(tmp_path, monkeypatch):
+    nb = tmp_path / "nb.ipynb"
+    nb.write_text("{}")
+    monkeypatch.setenv("JPY_SESSION_NAME", str(nb))
+    seen = {}
+
+    def fake(source, display_last_expr=True, cwd=None):
+        seen["cwd"] = cwd
+        return ExerciseResult()
+
+    monkeypatch.setattr(widget_module, "run_exercise", fake)
+    shell = _FakeShell()
+    register_exercise_magic(ipython=shell)
+    shell.magics_manager.magics["cell"]["sandbox"]("", "x = 1")
+    assert seen["cwd"] == str(tmp_path)

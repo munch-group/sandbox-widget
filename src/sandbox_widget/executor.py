@@ -23,6 +23,7 @@ import ast
 import contextlib
 import io
 import multiprocessing
+import os
 import sys
 import traceback
 
@@ -104,7 +105,7 @@ def _last_line_value(tree, namespace, filename):
     return None
 
 
-def run_exercise(source, display_last_expr=True):
+def run_exercise(source, display_last_expr=True, cwd=None):
     """Run ``source`` in a fresh, fully isolated **subprocess** and capture
     everything it produced.
 
@@ -144,18 +145,25 @@ def run_exercise(source, display_last_expr=True):
         auto-displays a trailing expression at all. Doesn't affect explicit
         ``display(...)`` calls inside the cell, which are captured either
         way.
+    cwd : str or path-like, optional
+        Working directory the subprocess ``chdir``s into before running
+        ``source`` (``widget.py``'s magics pass the notebook's own folder).
+        ``None`` (the default) leaves the subprocess in whatever directory
+        it inherited from the calling process. A directory that can't be
+        entered is reported via ``ExerciseResult.error`` like any other
+        failure.
 
     Returns
     -------
     ExerciseResult
     """
-    return _run_isolated(source, display_last_expr)
+    return _run_isolated(source, display_last_expr, cwd)
 
 
-def _run_isolated(source, display_last_expr):
+def _run_isolated(source, display_last_expr, cwd):
     ctx = multiprocessing.get_context("spawn")
     parent_conn, child_conn = ctx.Pipe()
-    process = ctx.Process(target=_child_main, args=(source, display_last_expr, child_conn))
+    process = ctx.Process(target=_child_main, args=(source, display_last_expr, cwd, child_conn))
     process.start()
     child_conn.close()
     try:
@@ -172,12 +180,14 @@ def _run_isolated(source, display_last_expr):
     return result
 
 
-def _child_main(source, display_last_expr, conn):
+def _child_main(source, display_last_expr, cwd, conn):
     """Entry point run inside the spawned subprocess: parse, execute, and
     capture ``source``, then send the resulting ``ExerciseResult`` back
     through ``conn`` before this disposable interpreter exits.
     """
     try:
+        if cwd is not None:
+            os.chdir(cwd)
         # Built and the source registered with linecache *before* parsing
         # (not only on the success path) so a SyntaxError gets the same
         # treatment as a runtime error: IPython's own "Cell In[0], line N"

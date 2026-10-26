@@ -26,6 +26,7 @@ Usage
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -464,6 +465,26 @@ def _display_plain(result):
         sys.stderr.write(result.traceback)
 
 
+def _notebook_dir(ip):
+    """The folder containing the notebook ``ip`` is running, or ``None`` if
+    it can't be determined -- in which case the subprocess just inherits
+    the kernel's current working directory (normally, but not necessarily,
+    the notebook's folder: an earlier ``os.chdir`` in the notebook, or a
+    kernel launched from elsewhere, moves it).
+
+    VS Code injects ``__vsc_ipynb_file__`` into the user namespace; Jupyter
+    Server (2.x+) sets ``JPY_SESSION_NAME`` in the kernel's environment to
+    the notebook's absolute path. Either is only trusted if it names an
+    existing file -- a console session's ``JPY_SESSION_NAME`` is a bare
+    session name, not a path.
+    """
+    user_ns = getattr(ip, "user_ns", None) or {}
+    for path in (user_ns.get("__vsc_ipynb_file__"), os.environ.get("JPY_SESSION_NAME")):
+        if path and os.path.isabs(path) and os.path.isfile(path):
+            return os.path.dirname(path)
+    return None
+
+
 def _read_source_file(line):
     """Resolve a line-magic argument to a filename and return its source
     text, or raise `UsageError` for a missing/bad filename -- shared by
@@ -559,20 +580,22 @@ def register_exercise_magic(ipython=None):
     if ip is None:
         return False
 
+    # Resolved per run, not once here: the notebook may be renamed/moved,
+    # and VS Code only injects __vsc_ipynb_file__ after the kernel starts.
     def exercise(line, cell):
-        _display_boxed(run_exercise(cell or ""))
+        _display_boxed(run_exercise(cell or "", cwd=_notebook_dir(ip)))
 
     def sandbox(line, cell):
-        _display_plain(run_exercise(cell or ""))
+        _display_plain(run_exercise(cell or "", cwd=_notebook_dir(ip)))
 
     def python_cell(line, cell):
-        _display_boxed(run_exercise(cell or "", display_last_expr=False))
+        _display_boxed(run_exercise(cell or "", display_last_expr=False, cwd=_notebook_dir(ip)))
 
     def sandbox_file(line):
-        _display_plain(run_exercise(_read_source_file(line)))
+        _display_plain(run_exercise(_read_source_file(line), cwd=_notebook_dir(ip)))
 
     def python_file(line):
-        _display_boxed(run_exercise(_read_source_file(line), display_last_expr=False))
+        _display_boxed(run_exercise(_read_source_file(line), display_last_expr=False, cwd=_notebook_dir(ip)))
 
     ip.register_magic_function(exercise, magic_kind="cell", magic_name="exercise")
     ip.register_magic_function(sandbox, magic_kind="cell", magic_name="sandbox")

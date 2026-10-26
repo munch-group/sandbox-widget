@@ -209,3 +209,16 @@ def test_display_last_expr_false_does_not_affect_explicit_display_calls():
         display_last_expr=False,
     )
     assert result.outputs == [{"text/plain": "explicit"}]
+
+
+def test_cwd_sets_the_subprocess_working_directory(tmp_path):
+    (tmp_path / "data.txt").write_text("hello")
+    result = run_exercise("open('data.txt').read()", cwd=tmp_path)
+    assert result.success, result.traceback
+    assert result.outputs[0]["text/plain"] == "'hello'"
+
+
+def test_unenterable_cwd_is_reported_not_raised(tmp_path):
+    result = run_exercise("1", cwd=tmp_path / "missing")
+    assert not result.success
+    assert "FileNotFoundError" in result.error
